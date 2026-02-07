@@ -1,5 +1,7 @@
 #lang gridcode
 
+(provide program)
+
 (define size 32)
 
 (define color-wall (color 1.0 1.0 1.0))
@@ -8,7 +10,7 @@
 (define color-paddle (color 1.0 0.8 0.2))
 (define color-black (color 0.0 0.0 0.0))
 
-(define my-program
+(define program
   (hash 'grid-size size
         'frame-rate 30
         
@@ -101,5 +103,3 @@
               (when (< paddle-right-x (- columns 2))
                 (delete-cell! paddle-left-x bottom-y "paddle")
                 (set-cell! (+ paddle-right-x 1) bottom-y "paddle" #t))))))
-
-(void (run my-program))

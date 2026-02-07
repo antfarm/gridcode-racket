@@ -1,6 +1,8 @@
 #lang gridcode
 
-(define my-program
+(provide program)
+
+(define program
   (hash 'grid-size 16
         'frame-rate 2
 
@@ -25,5 +27,3 @@
         'handle-cell-tapped (lambda (x y)
                               (define alive (get-cell x y "alive"))
                               (set-cell! x y "alive" (not alive)))))
-
-(void (run my-program))
