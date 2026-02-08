@@ -1,6 +1,7 @@
-#lang gridcode
+#lang racket
 
-(provide program)
+(require gridcode/grid/main
+         gridcode/gridcode)
 
 (define size 32)
 
@@ -105,3 +106,5 @@
               (when (< paddle-right-x (- columns 2))
                 (delete-cell! paddle-left-x bottom-y "paddle")
                 (set-cell! (+ paddle-right-x 1) bottom-y "paddle" #t))))))
+
+(run program)

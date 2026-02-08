@@ -1,6 +1,7 @@
-#lang gridcode
+#lang racket
 
-(provide program)
+(require gridcode/grid/main
+         gridcode/gridcode)
 
 (define program
   (hash 'display-name "Hello"
@@ -29,3 +30,5 @@
         'handle-cell-tapped (lambda (x y)
                               (define alive (get-cell x y "alive"))
                               (set-cell! x y "alive" (not alive)))))
+
+(run program)

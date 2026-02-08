@@ -1,6 +1,7 @@
-#lang gridcode
+#lang racket
 
-(provide program)
+(require gridcode/grid/main
+         gridcode/gridcode)
 
 (define neighborhood
   '((-1 -1) (0 -1) (1 -1) (-1  0) (1  0) (-1  1) (0  1) (1  1)))
@@ -80,3 +81,5 @@
           (define state (get-cell x y "state"))
           (set-cell! x y "state" (if (equal? state "alive") "dead" "alive"))
           (set-cell! x y "age" (if (equal? state "alive") 0 1)))))
+
+(run program)
