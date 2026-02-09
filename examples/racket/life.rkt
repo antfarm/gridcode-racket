@@ -69,6 +69,9 @@
   (set-cell! x y "state" (if (equal? state "alive") "dead" "alive"))
   (set-cell! x y "age" (if (equal? state "alive") 0 1)))
 
+(define (handle-key-pressed key)
+  (void))
+
 (define program
   (hash 'display-name display-name
         'grid-size grid-size
@@ -77,6 +80,7 @@
         'update-grid update-grid
         'color-for-cell color-for-cell
         'info-for-cell info-for-cell
-        'handle-cell-tapped handle-cell-tapped))
+        'handle-cell-tapped handle-cell-tapped
+        'handle-key-pressed handle-key-pressed))
 
 (run program)

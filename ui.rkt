@@ -29,6 +29,7 @@
   (define canvas
     (new (class canvas%
            (super-new)
+
            (define/override (on-event event)
              (when (send event button-down?)
                (define x (quotient (send event get-x) cell-size))
@@ -39,7 +40,14 @@
                        (set-box! inspected-cell (list x y))
                        ((hash-ref runtime 'inspect-cell) x y))
                      ((hash-ref runtime 'handle-cell-tapped) x y))
-                 (send this refresh)))))
+                 (send this refresh))))
+
+           (define/override (on-char event)
+             (define key-code (send event get-key-code))
+             (unless (eq? key-code 'release)
+               ((hash-ref runtime 'handle-key-pressed) key-code)
+               (send this refresh))))
+
          [parent frame]
          [min-width window-size]
          [min-height window-size]

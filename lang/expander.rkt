@@ -15,7 +15,7 @@
      (let ([required '(grid-size frame-rate
                                  setup-grid update-grid
                                  color-for-cell info-for-cell
-                                 handle-cell-tapped)]
+                                 handle-cell-tapped handle-key-pressed)]
            [defined '()])
 
        ;; Collect all definitions
@@ -43,7 +43,8 @@
                      [update-grid-id (datum->syntax stx 'update-grid)]
                      [color-for-cell-id (datum->syntax stx 'color-for-cell)]
                      [info-for-cell-id (datum->syntax stx 'info-for-cell)]
-                     [handle-cell-tapped-id (datum->syntax stx 'handle-cell-tapped)])
+                     [handle-cell-tapped-id (datum->syntax stx 'handle-cell-tapped)]
+                     [handle-key-pressed-id (datum->syntax stx 'handle-key-pressed)])
          #'(begin
              body ...
 
@@ -55,6 +56,7 @@
                      'update-grid update-grid-id
                      'color-for-cell color-for-cell-id
                      'info-for-cell info-for-cell-id
-                     'handle-cell-tapped handle-cell-tapped-id))
+                     'handle-cell-tapped handle-cell-tapped-id
+                     'handle-key-pressed handle-key-pressed-id))
 
              (provide program))))]))

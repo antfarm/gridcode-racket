@@ -36,11 +36,15 @@
       (displayln ((hash-ref prog 'info-for-cell) (first coords) (second coords))))
     (yield))
 
+  (define (color-for-cell x y)
+    ((hash-ref prog 'color-for-cell) x y))
+
   (define (handle-cell-tapped x y)
     ((hash-ref prog 'handle-cell-tapped) x y))
 
-  (define (color-for-cell x y)
-    ((hash-ref prog 'color-for-cell) x y))
+  (define (handle-key-pressed key)
+    ((hash-ref prog 'handle-key-pressed) key))
+
 
   ;; Run Loop
 
@@ -83,8 +87,10 @@
         'frame-rate frame-rate
         'setup-grid setup-grid
         'update-grid update-grid
-        'handle-cell-tapped handle-cell-tapped
         'color-for-cell color-for-cell
+        'handle-cell-tapped handle-cell-tapped
+        'handle-key-pressed handle-key-pressed
+
         'start-loop start-loop
         'stop-loop stop-loop
         'running? running?

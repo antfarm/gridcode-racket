@@ -72,21 +72,32 @@
 (define (info-for-cell x y)
   (format "[~a|~a] ~a" x y (get-cell x y)))
 
-(define (handle-cell-tapped x y)
+(define (move-paddle dir)
   (define paddle-xs (map first (get-all-xy "paddle")))
   (define paddle-left-x (apply min paddle-xs))
   (define paddle-right-x (apply max paddle-xs))
   (define bottom-y (- grid-size 1))
-  (define columns grid-size)
+  (cond
+    [(eq? dir 'left)
+     (when (> paddle-left-x 1)
+       (delete-cell! paddle-right-x bottom-y "paddle")
+       (set-cell! (- paddle-left-x 1) bottom-y "paddle" #t))]
+    [(eq? dir 'right)
+     (when (< paddle-right-x (- grid-size 2))
+       (delete-cell! paddle-left-x bottom-y "paddle")
+       (set-cell! (+ paddle-right-x 1) bottom-y "paddle" #t))]))
 
-  (if (< x (quotient columns 2))
-      (when (> paddle-left-x 1)
-        (delete-cell! paddle-right-x bottom-y "paddle")
-        (set-cell! (- paddle-left-x 1) bottom-y "paddle" #t))
+(define (handle-cell-tapped x _y)
+  (if (< x (quotient grid-size 2))
+      (move-paddle 'left)
+      (move-paddle 'right)))
 
-      (when (< paddle-right-x (- columns 2))
-        (delete-cell! paddle-left-x bottom-y "paddle")
-        (set-cell! (+ paddle-right-x 1) bottom-y "paddle" #t))))
+(define (handle-key-pressed key)
+  (cond
+    [(eq? key 'left) (move-paddle 'left)]
+    [(eq? key 'right) (move-paddle 'right)]
+    [(eq? key #\space) (begin (clear!) (setup-grid))]
+    [else (void)]))
 
 (define program
   (hash 'display-name display-name
@@ -96,6 +107,7 @@
         'update-grid update-grid
         'color-for-cell color-for-cell
         'info-for-cell info-for-cell
-        'handle-cell-tapped handle-cell-tapped))
+        'handle-cell-tapped handle-cell-tapped
+        'handle-key-pressed handle-key-pressed))
 
 (run program)

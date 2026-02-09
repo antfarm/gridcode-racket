@@ -64,4 +64,7 @@
          (define (handle-cell-tapped x y)
            (define state (get-cell x y "state"))
            (set-cell! x y "state" (if (equal? state "alive") "dead" "alive"))
-           (set-cell! x y "age" (if (equal? state "alive") 0 1))))
+           (set-cell! x y "age" (if (equal? state "alive") 0 1)))
+
+         (define (handle-key-pressed key)
+           (void)))

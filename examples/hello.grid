@@ -24,4 +24,7 @@
 
          (define (handle-cell-tapped x y)
            (define alive (get-cell x y "alive"))
-           (set-cell! x y "alive" (not alive))))
+           (set-cell! x y "alive" (not alive)))
+
+         (define (handle-key-pressed key)
+           (void)))
