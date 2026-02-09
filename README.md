@@ -38,9 +38,9 @@ raco pkg install --link ../gridcode
 
 ## Usage
 
-Programs can be written in either the GridCode DSL (`.grid` files) or in Racket (`.rkt` files). For reference, have a look at the example programs.
+Programs are written using the GridCode DSL in `.grid` files with the `#lang gridcode` language. For reference, have a look at the example programs.
 
-Run the GridCode DSL examples:
+Run the examples:
 ```bash
 # Conway's Game of Life
 ./bin/gridcode examples/life.grid
@@ -50,16 +50,4 @@ Run the GridCode DSL examples:
 
 # Minimal Demo
 ./bin/gridcode examples/hello.grid
-```
-
-Run the Racket examples:
-```bash
-# Conway's Game of Life
-racket examples/racket/life.rkt
-
-# Pong
-racket examples/racket/pong.rkt
-
-# Minimal Demo
-racket examples/racket/hello.rkt
 ```
