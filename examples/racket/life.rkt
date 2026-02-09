@@ -27,7 +27,7 @@
 
 (define program
   (hash 'display-name "Game of Life"
-  
+
         'grid-size size
         'frame-rate 60
 

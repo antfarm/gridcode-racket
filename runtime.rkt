@@ -2,7 +2,7 @@
 
 (require racket/class
          racket/gui/base
-         gridcode/grid/main 
+         gridcode/grid/main
          gridcode/events)
 
 (provide create-runtime)
@@ -40,7 +40,7 @@
     ((hash-ref prog 'handle-cell-tapped) x y))
 
   (define (color-for-cell x y)
-     ((hash-ref prog 'color-for-cell) x y))
+    ((hash-ref prog 'color-for-cell) x y))
 
   ;; Run Loop
 

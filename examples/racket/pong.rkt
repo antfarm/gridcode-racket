@@ -13,38 +13,38 @@
 
 (define program
   (hash 'display-name "Pong"
-       
+
         'grid-size size
         'frame-rate 30
-        
+
         'setup-grid
         (lambda ()
           (define columns size)
           (define rows size)
-          
+
           ;; Walls
           (for ([y (in-range rows)])
             (set-cell! 0 y "wall" #t)
             (set-cell! 0 y "dx" 1)
             (set-cell! (- columns 1) y "wall" #t)
             (set-cell! (- columns 1) y "dx" -1))
-          
+
           (for ([x (in-range columns)])
             (set-cell! x 0 "wall" #t)
             (set-cell! x 0 "dy" 1)
             (set-cell! x (- rows 1) "out" #t))
-          
+
           ;; Paddle
           (define center (quotient rows 2))
           (define paddle-range (range (- center 2) (+ center 3)))
           (for ([x paddle-range])
             (set-cell! x (- rows 1) "paddle" #t))
-          
+
           ;; Ball
           (define ball-x (list-ref paddle-range (random (length paddle-range))))
           (define dx (list-ref '(-1 1) (random 2)))
           (set-cell! ball-x (- rows 2) "ball" (list dx -1)))
-        
+
         'update-grid
         (lambda ()
           (define ball-coords (get-all-xy "ball"))
@@ -57,25 +57,25 @@
             (define dy (second ball-vel))
             (define new-x (+ ball-x dx))
             (define new-y (+ ball-y dy))
-            
+
             (delete-cell! ball-x ball-y "ball")
-            
+
             (cond
               [(get-cell new-x new-y "wall")
                (define new-dx (get-cell new-x new-y "dx" dx))
                (define new-dy (get-cell new-x new-y "dy" dy))
                (set-cell! (+ ball-x new-dx) (+ ball-y new-dy) "ball" (list new-dx new-dy))]
-              
+
               [(get-cell ball-x new-y "paddle")
                (define new-dx (list-ref '(-1 1) (random 2)))
                (set-cell! (+ ball-x new-dx) (- ball-y 1) "ball" (list new-dx -1))]
-              
+
               [(get-cell new-x new-y "out")
                (set-cell! ball-x new-y "ball-out" (list 0 0))]
-              
+
               [else
                (set-cell! new-x new-y "ball" (list dx dy))])))
-        
+
         'color-for-cell
         (lambda (x y)
           (cond
@@ -84,11 +84,11 @@
             [(get-cell x y "ball") color-ball]
             [(get-cell x y "paddle") color-paddle]
             [else color-black]))
-        
+
         'info-for-cell
         (lambda (x y)
           (format "[~a|~a] ~a" x y (get-cell x y)))
-        
+
         'handle-cell-tapped
         (lambda (x _y)
           (define paddle-xs (map first (get-all-xy "paddle")))
@@ -96,7 +96,7 @@
           (define paddle-right-x (apply max paddle-xs))
           (define bottom-y (- size 1))
           (define columns size)
-          
+
           (if (< x (quotient columns 2))
               ;; Move left
               (when (> paddle-left-x 1)
