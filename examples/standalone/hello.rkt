@@ -9,25 +9,25 @@
 
 (define (setup-grid)
   (for ([x (in-range 16)])
-    (set-cell! x x "alive" #t)))
+    (set-cell! x x 'on #t)))
 
 (define (update-grid)
   (for* ([x (in-range 16)]
          [y (in-range 16)])
-    (define alive (get-cell x y "alive"))
-    (set-cell! x y "alive" (not alive))))
+    (define alive (get-cell x y 'on))
+    (set-cell! x y 'on (not alive))))
 
 (define (color-for-cell x y)
-  (if (get-cell x y "alive")
+  (if (get-cell x y 'on)
       (color 1.0 0.8 0.2)
       (color 0.0 0.0 0.0)))
 
 (define (info-for-cell x y)
-  (format "[~a|~a] alive: ~a" x y (get-cell x y "alive")))
+  (format "[~a|~a] ~a" x y (if (get-cell x y 'on) "on" "off")))
 
 (define (handle-cell-tapped x y)
-  (define alive (get-cell x y "alive"))
-  (set-cell! x y "alive" (not alive)))
+  (define alive (get-cell x y 'on))
+  (set-cell! x y 'on (not alive)))
 
 (define (handle-key-pressed key)
   (void))
