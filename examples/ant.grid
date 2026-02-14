@@ -6,23 +6,24 @@
  (define grid-size 32)
  (define frame-rate 10)
 
+
  (define (setup-grid)
    (define x (quotient grid-size 2))
    (define y x)
-   (set-cell! x y 'ant)
-   (set-grid! 'idle-ticks 0)
-   (set-grid! 'direction 'up))
+   (set-cell! x y 'ant (random-direction))
+   (set-cell! x y 'trail 1.0))
+
 
  (define (update-grid)
    (decay-trails)
 
-   (define idle-ticks (get-grid 'idle-ticks))
+   (define idle-ticks (get-grid 'idle-ticks 0))
    (when (and (> idle-ticks 50) (< (random 100) 3))
-     (define direction (list-ref '(left right up down) (random 4)))
-     (set-grid! 'direction direction))
+     (update-ant (random-direction)))
    (set-grid! 'idle-ticks (+ idle-ticks 1))
 
-   (move-ant (get-grid 'direction)))
+   (move-ant))
+
 
  (define (color-for-cell x y)
    (cond
@@ -33,22 +34,38 @@
                               (color 0.2 0.9 0.0 opacity)))
      (else (color 0.0 0.0 0.0))))
 
+
  (define (info-for-cell x y)
    (format "(~a,~a) ~a" x y (get-cell x y)))
 
+
  (define (handle-cell-tapped x y)
    (void))
+
 
  (define (handle-key-pressed key)
    (cond
      ((member key '(left right up down))
       (begin
-        (set-grid! 'idle-ticks 0)
-        (set-grid! 'direction key)))
+        (update-ant key)
+        (set-grid! 'idle-ticks 0)))
      ((eq? key #\space) (begin (clear!) (setup-grid)))
      (else (void))))
 
- (define (move-ant direction)
+
+ (define (update-ant direction)
+   (define pos (first (get-all-xy 'ant)))
+   (define x (first pos))
+   (define y (second pos))
+   (set-cell! x y 'ant direction))
+
+
+ (define (move-ant)
+   (define pos (first (get-all-xy 'ant)))
+   (define x (first pos))
+   (define y (second pos))
+
+   (define direction (get-cell x y 'ant))
    (define-values (dx dy)
      (case direction
        ((left)  (values -1  0))
@@ -56,17 +73,19 @@
        ((up)    (values  0 -1))
        ((down)  (values  0  1))))
 
-   (define pos (first (get-all-xy 'ant)))
-   (define x (first pos))
-   (define y (second pos))
    (define new-x (modulo (+ x dx) grid-size))
    (define new-y (modulo (+ y dy) grid-size))
 
    (delete-cell! x y 'ant)
-   (set-cell! new-x new-y 'ant)
+   (set-cell! new-x new-y 'ant direction)
 
    (define concentration (get-cell new-x new-y 'trail 0))
    (set-cell! new-x new-y 'trail (+ concentration 1.0)))
+
+
+ (define (random-direction)
+   (list-ref '(left right up down) (random 4)))
+
 
  (define (decay-trails)
    (define evaporation-rate 0.07)
