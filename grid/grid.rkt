@@ -9,7 +9,6 @@
          set-grid!
          get-grid
          delete-grid!
-         get-all-xy
          delete-all!
          clear!)
 
@@ -97,13 +96,6 @@
 
 (define (all-coordinates)
   (hash-ref grid 'coordinates))
-
-(define (get-all-xy key)
-  (filter (lambda (coord)
-            (let ([x (first coord)]
-                  [y (second coord)])
-              (get-cell x y key)))
-          (all-coordinates)))
 
 (define (delete-all! key)
   (for ([coord (all-coordinates)])
