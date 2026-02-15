@@ -7,7 +7,8 @@
 
 (provide (all-from-out racket)
          (all-from-out gridcode/grid/main)
-         program)
+         program
+         define-list)
 
 (define-syntax (program stx)
   (syntax-case stx ()
@@ -60,3 +61,8 @@
                      'handle-key-pressed handle-key-pressed-id))
 
              (provide program))))]))
+
+(define-syntax define-list
+  (syntax-rules ()
+    [(define-list (var ...) expr)
+     (match-define (list var ...) expr)]))
