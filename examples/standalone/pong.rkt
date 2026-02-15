@@ -32,12 +32,11 @@
   (set-cell! ball-x (- rows 2) 'ball (list dx -1)))
 
 (define (update-grid)
-  (define ball-coords (get-all-xy 'ball))
-  (when (not (empty? ball-coords))
-    (define ball-pos (first ball-coords))
-    (define ball-x (first ball-pos))
-    (define ball-y (second ball-pos))
-    (define ball-vel (get-cell ball-x ball-y 'ball))
+  (define ball-cell (get-any-cell 'ball))
+  (when ball-cell
+    (define ball-x (first ball-cell))
+    (define ball-y (second ball-cell))
+    (define ball-vel (third ball-cell))
     (define dx (first ball-vel))
     (define dy (second ball-vel))
     (define new-x (+ ball-x dx))
@@ -63,7 +62,7 @@
 
 (define (color-for-cell x y)
   (cond
-    [(get-cell x y 'wall) (color 1.0 1.0 1.0)]
+    [(get-cell x y 'wall) (color 1.0 1.0 1.0 0.15)]
     [(get-cell x y 'ball-out) (color 1.0 0.0 0.0)]
     [(get-cell x y 'ball) (color 0.2 0.9 0.0)]
     [(get-cell x y 'paddle) (color 1.0 0.8 0.2)]
@@ -85,7 +84,7 @@
     [else (void)]))
 
 (define (move-paddle dir)
-  (define paddle-xs (map first (get-all-xy 'paddle)))
+  (define paddle-xs (map first (get-all-cells 'paddle)))
   (define paddle-left-x (apply min paddle-xs))
   (define paddle-right-x (apply max paddle-xs))
   (define bottom-y (- grid-size 1))

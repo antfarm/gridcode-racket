@@ -6,13 +6,11 @@
  (define grid-size 32)
  (define frame-rate 10)
 
-
  (define (setup-grid)
    (define x (quotient grid-size 2))
    (define y x)
    (set-cell! x y 'ant (random-direction))
    (set-cell! x y 'trail 1.0))
-
 
  (define (update-grid)
    (decay-trails)
@@ -24,7 +22,6 @@
 
    (move-ant))
 
-
  (define (color-for-cell x y)
    (cond
      ((get-cell x y 'ant) (color 1.0 0.8 0.2))
@@ -34,14 +31,11 @@
                               (color 0.2 0.9 0.0 opacity)))
      (else (color 0.0 0.0 0.0))))
 
-
  (define (info-for-cell x y)
    (format "(~a,~a) ~a" x y (get-cell x y)))
 
-
  (define (handle-cell-tapped x y)
    (void))
-
 
  (define (handle-key-pressed key)
    (cond
@@ -52,47 +46,33 @@
      ((eq? key #\space) (begin (clear!) (setup-grid)))
      (else (void))))
 
-
  (define (update-ant direction)
-   (define pos (first (get-all-xy 'ant)))
-   (define x (first pos))
-   (define y (second pos))
+   (define-list (x y _) (get-any-cell 'ant))
    (set-cell! x y 'ant direction))
 
-
  (define (move-ant)
-   (define pos (first (get-all-xy 'ant)))
-   (define x (first pos))
-   (define y (second pos))
-
-   (define direction (get-cell x y 'ant))
-   (define-values (dx dy)
+   (define-list (x y direction) (get-any-cell 'ant))
+   (define-list (dx dy)
      (case direction
-       ((left)  (values -1  0))
-       ((right) (values  1  0))
-       ((up)    (values  0 -1))
-       ((down)  (values  0  1))))
-
+       ((left)  (list -1  0))
+       ((right) (list  1  0))
+       ((up)    (list  0 -1))
+       ((down)  (list  0  1))))
    (define new-x (modulo (+ x dx) grid-size))
    (define new-y (modulo (+ y dy) grid-size))
-
    (delete-cell! x y 'ant)
    (set-cell! new-x new-y 'ant direction)
 
    (define concentration (get-cell new-x new-y 'trail 0))
    (set-cell! new-x new-y 'trail (+ concentration 1.0)))
 
-
  (define (random-direction)
    (list-ref '(left right up down) (random 4)))
 
-
  (define (decay-trails)
    (define evaporation-rate 0.07)
-   (for ((pos (get-all-xy 'trail)))
-     (define x (first pos))
-     (define y (second pos))
-     (define concentration (get-cell x y 'trail))
+   (for ((cell (get-all-cells 'trail)))
+     (define-list (x y concentration) cell)
      (define new-concentration (* concentration (- 1.0 evaporation-rate)))
      (if (< new-concentration 0.07)
          (delete-cell! x y 'trail)
