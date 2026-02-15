@@ -4,6 +4,8 @@
          set-cell!
          get-cell
          delete-cell!
+         get-all-cells
+         get-any-cell
          set-grid!
          get-grid
          delete-grid!
@@ -53,7 +55,26 @@
     (when cell
       (hash-remove! cell key))))
 
-;; Grid data
+;; Get all cells with a given key, returns list of (x y data)
+(define (get-all-cells key)
+  (filter-map (lambda (coord)
+                (let* ([x (first coord)]
+                       [y (second coord)]
+                       [data (get-cell x y key)])
+                  (and data (list x y data))))
+              (all-coordinates)))
+
+;; Get any one cell with a given key, returns (x y data) or #f
+(define (get-any-cell key)
+  (let ([result (findf (lambda (coord)
+                         (get-cell (first coord) (second coord) key))
+                       (all-coordinates))])
+    (and result
+         (list (first result)
+               (second result)
+               (get-cell (first result) (second result) key)))))
+
+;; Grid (global) data
 
 (define (set-grid! key value)
   (let ([data (hash-ref grid 'data)])
