@@ -59,14 +59,16 @@
   (filter-map (lambda (coord)
                 (let* ([x (first coord)]
                        [y (second coord)]
-                       [data (get-cell x y key)])
-                  (and data (list x y data))))
+                       [cell (get-cell x y)])
+                  (if (hash-has-key? cell key)
+                      (list x y (hash-ref cell key))
+                      #f)))
               (all-coordinates)))
 
 ;; Get any one cell with a given key, returns (x y data) or #f
 (define (get-any-cell key)
   (let ([result (findf (lambda (coord)
-                         (get-cell (first coord) (second coord) key))
+                         (hash-has-key? (get-cell (first coord) (second coord)) key))
                        (all-coordinates))])
     (and result
          (list (first result)
