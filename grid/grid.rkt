@@ -10,7 +10,11 @@
          get-grid
          delete-grid!
          delete-all!
-         clear!)
+         clear!
+         bounds
+         collides?
+         collides-at?
+         move-cells!)
 
 ;; Internal grid state
 
@@ -74,6 +78,42 @@
          (list (first result)
                (second result)
                (get-cell (first result) (second result) key)))))
+
+(define (move-cells! key dx dy)
+  (define cells-to-move (get-all-cells key))
+  (for ([cell cells-to-move])
+    (match-define (list x y _data) cell)
+    (delete-cell! x y key))
+  (for ([cell cells-to-move])
+    (match-define (list x y data) cell)
+    (set-cell! (+ x dx) (+ y dy) key data)))
+
+(define (bounds key)
+  (define cells (get-all-cells key))
+  (if (empty? cells)
+      #f
+      (let ([xs (map first cells)]
+            [ys (map second cells)])
+        (list (apply min xs) (apply max xs)
+              (apply min ys) (apply max ys)))))
+
+(define (get-coords key)
+  (map (lambda (cell) (list (first cell) (second cell)))
+       (get-all-cells key)))
+
+(define (collides? key1 key2)
+  (define coords1 (list->set (get-coords key1)))
+  (define coords2 (list->set (get-coords key2)))
+  (not (set-empty? (set-intersect coords1 coords2))))
+
+(define (collides-at? key dx dy other-key)
+  (define moved-coords (list->set
+                        (map (lambda (cell)
+                               (list (+ (first cell) dx)
+                                     (+ (second cell) dy)))
+                             (get-all-cells key))))
+  (define other-coords (list->set (get-coords other-key)))
+  (not (set-empty? (set-intersect moved-coords other-coords))))
 
 ;; Grid (global) data
 

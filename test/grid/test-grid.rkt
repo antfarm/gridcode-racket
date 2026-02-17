@@ -42,3 +42,37 @@
            (set-cell! 5 5 "state" "alive")
            (clear!)
            (check-false (get-cell 5 5 "state")))
+
+(test-case "bounds returns bounding box"
+           (init! 10)
+           (set-cell! 2 3 'block)
+           (set-cell! 5 1 'block)
+           (check-equal? (bounds 'block) '(2 5 1 3)))
+
+(test-case "bounds returns #f when no cells match"
+           (init! 10)
+           (check-false (bounds 'missing)))
+
+(test-case "collides? detects overlap"
+           (init! 10)
+           (set-cell! 3 3 'a)
+           (set-cell! 3 3 'b)
+           (check-true (collides? 'a 'b)))
+
+(test-case "collides? returns #f when no overlap"
+           (init! 10)
+           (set-cell! 1 1 'a)
+           (set-cell! 5 5 'b)
+           (check-false (collides? 'a 'b)))
+
+(test-case "collides-at? detects hypothetical collision"
+           (init! 10)
+           (set-cell! 2 2 'mover)
+           (set-cell! 3 2 'wall)
+           (check-true (collides-at? 'mover 1 0 'wall)))
+
+(test-case "collides-at? returns #f when move is clear"
+           (init! 10)
+           (set-cell! 2 2 'mover)
+           (set-cell! 9 9 'wall)
+           (check-false (collides-at? 'mover 1 0 'wall)))
