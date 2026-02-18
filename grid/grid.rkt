@@ -121,14 +121,9 @@
   (let ([data (hash-ref grid 'data)])
     (hash-set! data key value)))
 
-(define get-grid
-  (case-lambda
-    [(key)
-     (let ([data (hash-ref grid 'data)])
-       (hash-ref data key #f))]
-    [(key default)
-     (let ([data (hash-ref grid 'data)])
-       (hash-ref data key default))]))
+(define (get-grid key [default #f])
+  (let ([data (hash-ref grid 'data)])
+    (hash-ref data key default)))
 
 (define (delete-grid! key)
   (let ([data (hash-ref grid 'data)])
