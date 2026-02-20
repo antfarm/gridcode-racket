@@ -15,7 +15,7 @@
  (define (update-grid)
    (decay-trails)
 
-   (define idle-ticks (get-grid 'idle-ticks 0))
+   (define idle-ticks (or (get-grid 'idle-ticks) 0))
    (when (and (> idle-ticks 50) (< (random 100) 3))
      (update-ant (random-direction)))
    (set-grid! 'idle-ticks (+ idle-ticks 1))
@@ -63,7 +63,7 @@
    (delete-cell! x y 'ant)
    (set-cell! new-x new-y 'ant direction)
 
-   (define concentration (get-cell new-x new-y 'trail 0))
+   (define concentration (or (get-cell new-x new-y 'trail) 0))
    (set-cell! new-x new-y 'trail (+ concentration 1.0)))
 
  (define (random-direction)
