@@ -225,3 +225,19 @@ Compared to the old API, the following are gone — replaced by `with` and selec
 - `delete-all!`
 
 The API is smaller, more orthogonal, and more composable. Four core concepts — `select`, `with`, `get`, mutate — cover everything the old API required many special-purpose functions to handle.
+
+
+## Emergence Over Engineering
+The most telling sign that this design is genuinely coherent is how it arrived at its conclusions.
+
+The session began with a specific goal: encapsulated behavior, entities that know how to act, the Breakout brick that knows what to do when hit. This was consciously set aside to preserve GridCode's identity — the grid as the world, coordinates as the universal currency, data and behavior separated for clarity and teachability.
+
+The selector redesign that followed was motivated by completely independent concerns: a cleaner API, orthogonality, removing overloaded functions, making multi-cell queries first-class. The index was introduced for performance and completeness. `with` emerged to handle iteration and binding cleanly. None of these decisions were made in service of encapsulation.
+
+And yet, at the end, `define-behavior` arrived — attaching behavior to selectors, composing multiple behaviors on a single entity, solving the multiple inheritance problem without inheritance machinery, giving entities the ability to "know how to act" based on what they are and what properties they carry. Exactly what was wanted at the start, but as an emergent property of the design rather than an engineered feature.
+
+This is the difference between a feature and an emergent property. A feature is bolted on to solve a problem. An emergent property falls out of a design that is right for other reasons.
+
+`define-behavior` itself is almost nothing — likely just a macro that registers a selector-function pair in a table that `update-grid` iterates. The heavy lifting is done entirely by `select` and the index. The behavior system is nearly free.
+
+This gives the design a kind of integrity that can be trusted: every part is justified on its own terms, and they happen to compose into something greater. The grid as coordinate-centered world, the index as the query engine, `select` as the universal descriptor, `with` as the iteration primitive, and `define-behavior` as the emergent encapsulation layer — none of these were designed to serve the others, yet together they form a coherent whole.
