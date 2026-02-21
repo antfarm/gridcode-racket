@@ -33,7 +33,7 @@ Furthermore, `move-cells!` operated on a key, moving all cells with that key tog
 
 **Key insight:** `move-cells!` was designed to solve the *sprite* problem (rigid multi-cell shapes moving as a unit), not to be the general way of moving cells. These are genuinely different concepts and should be treated differently.
 
-## Introducing the Descriptor / Selector
+## Introducing the Selector
 
 The central design innovation of this session: a **selector** (constructed by `select`) is a first-class value that *describes* a set of cells without immediately evaluating.
 ```racket
@@ -44,7 +44,7 @@ The central design innovation of this session: a **selector** (constructed by `s
 ```
 
 ### Implementation
-A selector is simply a function from the grid to a list of coordinates:
+A selector is simply a function from the grid to a **set** of coordinates:
 ```racket
 (select 'ball 'team 1)
 ; → (lambda (grid) (index-lookup grid 'ball 'team 1))
@@ -56,6 +56,19 @@ No macro needed — `select` is a plain higher-order function. The declarative f
 The index is the primary data structure for queries — not a cache, not an optimization, but the source of truth for property-based lookups. Every mutation (`set-cell!`, `update!`, `delete!`) maintains the index as a side effect. Selectors query the index exclusively. No scanning ever.
 
 The index structure: `key → property → value → set of (x y)` coordinates. Completely invisible to the user — an implementation detail that makes the whole system fast and predictable.
+
+Because the index stores **sets** of coordinates natively, selector composition is efficient by default:
+```racket
+(define (select-union s1 s2)
+  (lambda (grid)
+    (set-union (s1 grid) (s2 grid))))
+
+(define (select-intersection s1 s2)
+  (lambda (grid)
+    (set-intersection (s1 grid) (s2 grid))))
+```
+
+These are not GridCode features — they are plain Racket functions that work for free because selectors are functions returning sets. The capability is there without any additional API surface.
 
 ### Selectors as First-Class Values
 Because a selector is just a value, it can be named:
@@ -92,11 +105,23 @@ The name is documentation for free. And if criteria change, you update one place
 
 The API now has three distinct, orthogonal levels:
 
-- **Coordinates** — where things are: `(select 'ball)` → `((x y) ...)`
+- **Coordinates** — where things are: `(select 'ball)` → set of `(x y)`
 - **Cells** — what's stored at a location: `(get-cell x y 'ball)` → dictionary/scalar/#t/#f
 - **Values** — properties within a dictionary: `(get dict 'dx)` → value
 
 Each level is simple on its own. `with` bridges coordinates to cell data naturally. `get` reads properties from dictionaries. These compose into the full picture.
+
+## Pattern Matching via Selectors
+```racket
+(select 'enemy)                         ; match by presence
+(select 'enemy 'state)                  ; match by property presence
+(select 'enemy 'state 'active)          ; match by value
+(select 'enemy 'state '(active frozen)) ; match by one of several values
+```
+
+Each line is a natural refinement of the previous — no wildcards, no special syntax, just increasing specificity. The fourth form is the only one introducing new syntax, and it reads intuitively: "state is one of active or frozen."
+
+This is pattern matching introduced gradually and concretely, grounded in something the student can see on the grid. A student who learns this will recognize pattern matching when they encounter it later in Elixir, Haskell, or Racket's own `match` — without ever having been intimidated by it.
 
 ## Encapsulation via `define-behavior`
 
@@ -113,49 +138,125 @@ Different behaviors for the same entity type based on state — without conditio
 
 `update-grid` orchestrates behavior execution order explicitly, which remains a feature — the designer controls how the world ticks.
 
-## Pattern Matching as a Teaching Concept
+### Multiple Behaviors Per Entity
 
-The selector syntax introduces pattern matching gradually and concretely:
+A cell can match multiple selectors simultaneously:
 ```racket
-(select 'enemy)                        ; match by presence
-(select 'enemy 'state 'active)         ; match by value
-(select 'enemy 'state _)               ; wildcard
-(select 'enemy 'state '(active frozen)); match one of several
+(define-behavior (select 'paddle)
+  (update ...))                        ; common to all paddles
+
+(define-behavior (select 'paddle 'player 1)
+  (update ...))                        ; player 1 specific
+
+(define-behavior (select 'paddle 'powerup 'sticky)
+  (update ...))                        ; fires if paddle has sticky powerup
 ```
 
-Each step introduces a more powerful matching concept, grounded in something the student can see spatially on the grid. A student who learns this will recognize pattern matching when they encounter it in Elixir, Haskell, or Racket's `match` — without ever having been intimidated by it.
+All three behaviors fire for a paddle belonging to player 1 with a sticky powerup. There is no ambiguity — behaviors don't override each other, they compose by all executing in the order `update-grid` declares. This is what multiple inheritance tries to achieve but fails at cleanly. Here it requires no special language machinery — it is just multiple selectors matching the same cell.
 
-## Pedagogical Design: Low Floor, High Ceiling
+Adding a new capability to an entity is just adding a property to its dictionary and defining a behavior for the matching selector. No class restructuring, no inheritance chain to reason about.
 
-The separation of data and behavior is preserved and intentional. For beginners, it is clear that code operates on data and is different from it. The grid is a data structure; the program is a set of operations on it. This maps visually to the editor: grid panel = data, code panel = operations.
+## GridCode-Flavored ECS
 
-The teaching progression:
-- **Beginner:** direct `set-cell!`/`get-cell` with coordinates, simple `with` loops
-- **Intermediate:** named selectors, cell dictionaries, `update!`/`delete!`
-- **Advanced:** `define-behavior` with pattern-matched selectors, indexed queries
+This design is essentially ECS without the jargon:
 
-Each level is genuinely useful on its own. Concepts build on each other honestly. A student learns encapsulation *after* understanding separation — the right order.
+- **Entity** — a cell at a position, identified by coordinates
+- **Component** — the key and its dictionary properties
+- **System** — a `define-behavior` attached to a selector
 
-Crucially: **one way to do things**, with syntax that scales. No beginner API to unlearn later.
+The difference from classical ECS: grid position *is* the entity identity, rather than a generated ID. A meaningful simplification that keeps coordinates at the center.
+
+Unlike OOP, data and behavior remain separate. The paddle doesn't *have* a behavior, it *matches* a behavior. The grid remains a pure data structure; the behavior registry is a separate layer.
+
+## Neighborhood Queries and Game of Life
+
+The selector model extends naturally to neighborhood queries — looping over coordinate deltas using the same coordinate currency:
+```racket
+(select-neighbors x y)              ; all 8 surrounding cells
+(select-neighbors x y 'wall)        ; surrounding cells with 'wall
+(select-neighbors x y 4)            ; 4-directional only
+```
+
+Inside a `with` loop, these compose naturally:
+```racket
+(with (select 'cell) as (x y cell)
+  (with (select-neighbors x y 'alive) as (nx ny ncell)
+    ...))
+```
+
+The outer loop gives each cell, the inner loop gives its living neighbors — Game of Life in two nested `with` constructs. The coordinate currency flows naturally from outer to inner.
+
+A more general form:
+```racket
+(select-at deltas x y)              ; apply a set of coordinate deltas
+(select-at deltas x y 'wall)        ; filtered
+```
+
+Where `deltas` could be a named constant like `neighbors-8`, `neighbors-4`, or a custom shape.
+
+## User-Defined Selectors
+
+Because a selector is just a function returning a set of coordinates, users can write their own:
+```racket
+(define (select-column x)
+  (lambda (grid)
+    (list->set (map (lambda (y) (list x y))
+                    (range (grid-height grid))))))
+
+(define (select-row y)
+  (lambda (grid)
+    (list->set (map (lambda (x) (list x y))
+                    (range (grid-width grid))))))
+```
+
+Used indistinguishably from built-in selectors:
+```racket
+(with (select-column 0) as (x y cell)
+  (set-cell! x y 'wall))
+```
+
+The built-in selectors are not a complete vocabulary — they are a starter kit of the most common patterns. The user extends them naturally using the same Racket they are already learning. The Pong wall example above is a natural first exercise in writing a custom selector.
+
+This is where the user stops being a consumer of the API and starts being a designer of their own abstractions — entirely within the "coordinates as currency" model, composing with everything else for free.
 
 ## The Grid as Center
 
 The most important philosophical outcome of this session: GridCode is not a collection of agents that happen to live on a grid — it's **a grid that happens to have things on it**.
 
-Coordinates are the universal currency. `select` returns coordinates. Mutations consume coordinates. Everything is anchored to the grid's topology. The visual representation is never just a display layer — it's a direct window into the actual data structure addressed by the same coordinates the code uses.
+Coordinates are the universal currency. `select` returns coordinates. Mutations consume coordinates. Neighborhood queries pass coordinates from outer to inner loops. User-defined selectors produce coordinates. Everything is anchored to the grid's topology.
+
+The visual representation is never just a display layer — it's a direct window into the actual data structure, addressed by the same coordinates the code uses. What you see on the grid *is* the program's state.
 
 Going the StarLogo route would have had the opposite effect: the grid becomes background, a surface agents move over. GridCode's grid *is* the world.
 
 ## The Inspector / GOM
 
-The current inspector is essentially hardcoded to `(select x y)` — the simplest possible selector. Generalizing it makes it a proper tool:
+The current inspector is essentially hardcoded to `(select x y)` — the simplest possible selector. Generalizing it makes it a proper tool for understanding program state at any moment:
 
-- Tap any selector in the code → matching cells highlight on the grid
-- Works for any selector, from simple key presence to pattern-matched properties
-- Makes abstract selector concepts concrete and visible
-- Turns debugging into "tap the selector, see what matches"
+- `(select 3 4)` — highlight a single cell, show its data
+- `(select 'ball)` — highlight all balls
+- `(select 'enemy 'state 'active)` — highlight active enemies, showing the effect of a pattern match
+- `(select 'enemy 'state)` — highlight all enemies regardless of state
+
+Tapping a selector in the iPad editor highlights the matching cells on the grid in real time. This closes the loop between code and visual representation in a way that is rare in programming tools. The student writes `(select 'enemy 'state 'active)` and the grid lights up showing exactly which enemies are active.
+
+Debugging becomes intuitive: "why isn't my behavior firing?" becomes "tap the selector and see what it matches."
 
 This is the **Grid Object Model (GOM)** — analogous to the browser DOM inspector, but for GridCode programs. The selector API and the inspector reinforce each other: learning selectors is learning to query your world, and the inspector makes every query immediately visible.
+
+## Pedagogical Design: Low Floor, High Ceiling
+
+The separation of data and behavior is preserved and intentional. For beginners, it is clear that code operates on data and is different from it. The grid is a data structure; the program is a set of operations on it.
+
+The teaching progression:
+
+- **Beginner:** direct `set-cell!`/`get-cell` with coordinates, simple `with` loops
+- **Intermediate:** named selectors, cell dictionaries, `update!`/`delete!`, `with` for iteration
+- **Advanced:** `define-behavior` with pattern-matched selectors, user-defined selectors, composition
+
+Each level is genuinely useful on its own. Concepts build on each other honestly. A student learns encapsulation *after* understanding separation — the right order.
+
+One way to do things, with syntax that scales. No beginner API to unlearn later.
 
 ## Updated API
 
@@ -164,8 +265,14 @@ This is the **Grid Object Model (GOM)** — analogous to the browser DOM inspect
 (select key)
 (select key property)
 (select key property value)
+(select key property '(value ...))
 (select x y)
 (select x y key)
+(select-neighbors x y)
+(select-neighbors x y key)
+(select-neighbors x y 4)
+(select-at deltas x y)
+(select-at deltas x y key)
 ```
 
 ### Iteration & Binding
@@ -220,14 +327,15 @@ This is the **Grid Object Model (GOM)** — analogous to the browser DOM inspect
 
 ## What Was Removed
 Compared to the old API, the following are gone — replaced by `with` and selector-based mutation:
+
 - `get-any-cell`
 - `get-all-cells`
 - `delete-all!`
 
 The API is smaller, more orthogonal, and more composable. Four core concepts — `select`, `with`, `get`, mutate — cover everything the old API required many special-purpose functions to handle.
 
-
 ## Emergence Over Engineering
+
 The most telling sign that this design is genuinely coherent is how it arrived at its conclusions.
 
 The session began with a specific goal: encapsulated behavior, entities that know how to act, the Breakout brick that knows what to do when hit. This was consciously set aside to preserve GridCode's identity — the grid as the world, coordinates as the universal currency, data and behavior separated for clarity and teachability.
