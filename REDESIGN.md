@@ -80,43 +80,82 @@ The name is documentation for free. And if criteria change, you update one place
 
 ## The `with` Construct
 
-`with` is GridCode's primary iteration construct, bridging selectors to cell data:
+`with` is GridCode's primary iteration and binding construct. It takes a selector, evaluates it against the grid, and binds coordinates and cell data for each match:
 ```racket
-(with (select 'ball) as (x y cell)
-  (define dx (get cell 'dx))
-  (define dy (get cell 'dy))
+(with (select 'ball) as (x y ball)
+  (define dx (get ball 'dx))
+  (define dy (get ball 'dy))
   ...)
 ```
 
-### Key properties:
+### The three bindings
+```racket
+(with (select 'ball) as (x y ball)
+  ...)
+```
+
+- `x y` — the coordinates. Use these when you need to know *where* — to move, check neighbors, or compute a new position.
+- `ball` (or whatever you name it) — the dictionary for the selected key. Use this when you need to read properties.
+- Both — the common case in `update-grid`: you need to know where the ball is *and* what its velocity is.
+
+Use `_` for bindings you don't need:
+```racket
+(with (select 'wall) as (x y _)   ; only need coordinates
+  (set-cell! x y 'wall 'dx 1))
+```
+
+Naming the cell binding after the entity rather than generically as `cell` is more readable and encouraged:
+```racket
+(with (select 'ball) as (x y ball)   ; preferred
+(with (select 'ball) as (x y cell)   ; less clear
+```
+
+### Key properties
 - Bindings are **explicitly named** by the user — no magic implicit variables
 - Handles **all cardinalities** implicitly: one match executes once, many executes many times, none skips entirely
 - Replaces `get-any-cell`, `get-all-cells`, `for-each`, and `map` for the common case
 - Nesting is unambiguous because bindings are named:
 ```racket
-(with (select 'ball) as (bx by ball-cell)
-  (with (select 'brick) as (rx ry brick-cell)
+(with (select 'ball) as (bx by ball)
+  (with (select-neighbors bx by 'wall) as (wx wy wall)
     ...))
 ```
 
-`with-any` remains for the case where only one match is needed, but the key insight is that with `with` handling all cardinalities, the distinction between single and multiple cells largely disappears.
+`with-any` is available when only one match is needed and iteration is not the intent.
+
+### When NOT to use `with`
+`with` is for when you need the grid to tell you *where things are*. When you already have coordinates — as in `color-for-cell`, which receives `x y` from the framework — use `get-cell` directly:
+```racket
+(define (color-for-cell x y)
+  (cond
+    ((get-cell x y 'wall)     (color 1.0 1.0 1.0))
+    ((get-cell x y 'ball-out) (color 1.0 0.0 0.0))
+    ((get-cell x y 'ball)     (color 0.2 0.9 0.0))
+    ((get-cell x y 'paddle)   (color 1.0 0.8 0.2))
+    (else                     (color 0.0 0.0 0.0))))
+```
+
+Going through a selector here would be a round trip for no benefit.
 
 ## Three Levels of Selection
 
-The API now has three distinct, orthogonal levels:
+The API has three distinct, orthogonal levels:
 
 - **Coordinates** — where things are: `(select 'ball)` → set of `(x y)`
 - **Cells** — what's stored at a location: `(get-cell x y 'ball)` → dictionary/scalar/#t/#f
 - **Values** — properties within a dictionary: `(get dict 'dx)` → value
 
-Each level is simple on its own. `with` bridges coordinates to cell data naturally. `get` reads properties from dictionaries. These compose into the full picture.
+Each level has a clear trigger condition:
+- You have coordinates and want to check what's there → `get-cell x y key`
+- You don't have coordinates and need to find things → `select` + `with`
+- You have a dictionary and want a property → `get dict property`
 
 ## Pattern Matching via Selectors
 ```racket
 (select 'enemy)                         ; match by presence
 (select 'enemy 'state)                  ; match by property presence
 (select 'enemy 'state 'active)          ; match by value
-(select 'enemy 'state '(active frozen)) ; match by one of several values
+(select 'enemy 'state '(active frozen)) ; match one of several
 ```
 
 Each line is a natural refinement of the previous — no wildcards, no special syntax, just increasing specificity. The fourth form is the only one introducing new syntax, and it reads intuitively: "state is one of active or frozen."
@@ -179,8 +218,8 @@ The selector model extends naturally to neighborhood queries — looping over co
 
 Inside a `with` loop, these compose naturally:
 ```racket
-(with (select 'cell) as (x y cell)
-  (with (select-neighbors x y 'alive) as (nx ny ncell)
+(with (select 'cell) as (x y _)
+  (with (select-neighbors x y 'alive) as (nx ny _)
     ...))
 ```
 
@@ -211,17 +250,51 @@ Because a selector is just a function returning a set of coordinates, users can 
 
 Used indistinguishably from built-in selectors:
 ```racket
-(with (select-column 0) as (x y cell)
-  (set-cell! x y 'wall))
+(with (select-column 0) as (x y _)
+  (set-cell! x y 'wall 'dx 1))
 ```
 
-The built-in selectors are not a complete vocabulary — they are a starter kit of the most common patterns. The user extends them naturally using the same Racket they are already learning. The Pong wall example above is a natural first exercise in writing a custom selector.
+The built-in selectors are not a complete vocabulary — they are a starter kit of the most common patterns. The user extends them naturally using the same Racket they are already learning.
 
 This is where the user stops being a consumer of the API and starts being a designer of their own abstractions — entirely within the "coordinates as currency" model, composing with everything else for free.
 
+### Declarative over Imperative
+
+Even in `setup-grid`, `with` with named selectors is preferred over `for` with manual ranges. Compare:
+```racket
+; declarative — preferred
+(with (select-column 0) as (x y _)
+  (set-cell! x y 'wall 'dx 1))
+
+; imperative — avoid
+(for ((y (in-range rows)))
+  (set-cell! 0 y 'wall 'dx 1))
+```
+
+The first reads as a description: "the left column is a rightward wall." The second describes how to compute it. GridCode favors describing *what* over describing *how*.
+
+## Movement Primitives
+
+GridCode has two distinct movement primitives for two distinct concepts:
+```racket
+(move-cells! 'paddle 1 0)              ; sprite — move all cells with key as a rigid body
+(move-to! x y new-x new-y 'ball)       ; agent — move a single cell to a new position
+```
+
+`move-cells!` moves a group of cells sharing a key as a rigid body by a delta — the paddle, a Tetris piece. `move-to!` moves a single cell from one position to another, carrying its data. These are genuinely different concepts and are named differently.
+
+`move-to!` is equivalent to:
+```racket
+(define (move-to! x y new-x new-y key)
+  (set-cell! new-x new-y key (get-cell x y key))
+  (delete-cell! x y key))
+```
+
+This transparency is intentional — the abstraction is honest and students can understand exactly what it does.
+
 ## The Grid as Center
 
-The most important philosophical outcome of this session: GridCode is not a collection of agents that happen to live on a grid — it's **a grid that happens to have things on it**.
+GridCode is not a collection of agents that happen to live on a grid — it's **a grid that happens to have things on it**.
 
 Coordinates are the universal currency. `select` returns coordinates. Mutations consume coordinates. Neighborhood queries pass coordinates from outer to inner loops. User-defined selectors produce coordinates. Everything is anchored to the grid's topology.
 
@@ -254,9 +327,7 @@ The teaching progression:
 - **Intermediate:** named selectors, cell dictionaries, `update!`/`delete!`, `with` for iteration
 - **Advanced:** `define-behavior` with pattern-matched selectors, user-defined selectors, composition
 
-Each level is genuinely useful on its own. Concepts build on each other honestly. A student learns encapsulation *after* understanding separation — the right order.
-
-One way to do things, with syntax that scales. No beginner API to unlearn later.
+Each level is genuinely useful on its own. Concepts build on each other honestly. A student learns encapsulation *after* understanding separation — the right order. One way to do things, with syntax that scales. No beginner API to unlearn later.
 
 ## Updated API
 
@@ -277,8 +348,8 @@ One way to do things, with syntax that scales. No beginner API to unlearn later.
 
 ### Iteration & Binding
 ```racket
-(with selector as (x y cell) body ...)
-(with-any selector as (x y cell) body ...)
+(with selector as (x y name) body ...)
+(with-any selector as (x y name) body ...)
 ```
 
 ### Cell Data
@@ -320,6 +391,7 @@ One way to do things, with syntax that scales. No beginner API to unlearn later.
 ### Movement & Collision
 ```racket
 (move-cells! key dx dy)
+(move-to! x y new-x new-y key)
 (collides? key1 key2)
 (collides-at? key dx dy other-key)
 (bounds key)
@@ -333,6 +405,104 @@ Compared to the old API, the following are gone — replaced by `with` and selec
 - `delete-all!`
 
 The API is smaller, more orthogonal, and more composable. Four core concepts — `select`, `with`, `get`, mutate — cover everything the old API required many special-purpose functions to handle.
+
+## Pong Example
+```racket
+#lang gridcode
+
+(program
+ "Pong"
+
+ (define grid-size 32)
+ (define frame-rate 30)
+
+ (define (setup-grid)
+   (define columns grid-size)
+   (define rows grid-size)
+
+   (with (select-column 0) as (x y _)
+     (set-cell! x y 'wall 'dx 1))
+   (with (select-column (- columns 1)) as (x y _)
+     (set-cell! x y 'wall 'dx -1))
+   (with (select-row 0) as (x y _)
+     (set-cell! x y 'wall 'dy 1))
+   (with (select-row paddle-y) as (x y _)
+     (set-cell! x y 'out))
+
+   (define center (quotient rows 2))
+   (define paddle-y (- rows 1))
+   (define paddle-xs (range (- center 2) (+ center 3)))
+   (for ((x paddle-xs))
+     (set-cell! x paddle-y 'paddle))
+
+   (define ball-x (list-ref paddle-xs (random (length paddle-xs))))
+   (define ball-y (- rows 2))
+   (define ball-dx (if (zero? (random 2)) -1 1))
+   (set-cell! ball-x ball-y 'ball 'dx ball-dx)
+   (set-cell! ball-x ball-y 'ball 'dy -1))
+
+ (define (update-grid)
+   (with-any (select 'ball) as (ball-x ball-y ball)
+     (define dx (get ball 'dx))
+     (define dy (get ball 'dy))
+     (define new-x (+ ball-x dx))
+     (define new-y (+ ball-y dy))
+
+     (delete-cell! ball-x ball-y 'ball)
+
+     (define wall   (get-cell new-x new-y 'wall))
+     (define paddle (get-cell ball-x new-y 'paddle))
+     (define out    (get-cell new-x new-y 'out))
+
+     (cond
+       (wall
+        (define new-dx (or (get wall 'dx) dx))
+        (define new-dy (or (get wall 'dy) dy))
+        (define bounce-x (+ ball-x new-dx))
+        (define bounce-y (+ ball-y new-dy))
+        (set-cell! bounce-x bounce-y 'ball 'dx new-dx)
+        (set-cell! bounce-x bounce-y 'ball 'dy new-dy))
+
+       (paddle
+        (define new-dx (if (zero? (random 2)) -1 1))
+        (define bounce-x (+ ball-x new-dx))
+        (define bounce-y (- ball-y 1))
+        (set-cell! bounce-x bounce-y 'ball 'dx new-dx)
+        (set-cell! bounce-x bounce-y 'ball 'dy -1))
+
+       (out
+        (set-cell! ball-x new-y 'ball-out))
+
+       (else
+        (set-cell! new-x new-y 'ball 'dx dx)
+        (set-cell! new-x new-y 'ball 'dy dy)))))
+
+ (define (color-for-cell x y)
+   (cond
+     ((get-cell x y 'wall)     (color 1.0 1.0 1.0))
+     ((get-cell x y 'ball-out) (color 1.0 0.0 0.0))
+     ((get-cell x y 'ball)     (color 0.2 0.9 0.0))
+     ((get-cell x y 'paddle)   (color 1.0 0.8 0.2))
+     (else                     (color 0.0 0.0 0.0))))
+
+ (define (info-for-cell x y)
+   (format "(~a,~a) ~a" x y (get-cell x y)))
+
+ (define (handle-cell-tapped x _y)
+   (move-paddle (if (< x (quotient grid-size 2)) 'left 'right)))
+
+ (define (handle-key-pressed key)
+   (cond
+     ((eq? key 'left)   (move-paddle 'left))
+     ((eq? key 'right)  (move-paddle 'right))
+     ((eq? key #\space) (clear!) (setup-grid))
+     (else              (void))))
+
+ (define (move-paddle dir)
+   (define dx (if (eq? dir 'left) -1 1))
+   (unless (collides-at? 'paddle dx 0 'wall)
+     (move-cells! 'paddle dx 0))))
+```
 
 ## Emergence Over Engineering
 
