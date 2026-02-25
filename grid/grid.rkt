@@ -1,8 +1,11 @@
 #lang racket
 
+(require "dictionary.rkt")
+
 (provide init!
          set-cell!
          get-cell
+         get
          delete-cell!
          get-all-cells
          get-any-cell
@@ -32,33 +35,58 @@
 
 ;; Cell data
 
-(define (set-cell! x y key [value #t])
+(define set-cell!
+  (case-lambda
+    [(x y key)
+     (cell-set! x y key #t)]
+    [(x y key value)
+     (cell-set! x y key value)]
+    [(x y key property value)
+     (let* ([cells (hash-ref grid 'cells)]
+            [cell  (hash-ref cells (list x y) (make-hash))]
+            [dict  (hash-ref cell key #f)]
+            [new-dict (if (dictionary? dict)
+                          (dictionary-set dict property value)
+                          (dictionary property value))])
+       (hash-set! cell key new-dict)
+       (hash-set! cells (list x y) cell))]))
+
+(define (cell-set! x y key value)
   (let* ([cells (hash-ref grid 'cells)]
-         [cell (hash-ref cells (list x y) (make-hash))])
+         [cell  (hash-ref cells (list x y) (make-hash))])
     (hash-set! cell key value)
     (hash-set! cells (list x y) cell)))
 
 (define get-cell
   (case-lambda
     [(x y)
-     (let ([cells (hash-ref grid 'cells)])
-       (hash-ref cells (list x y) (make-hash)))]
+     (hash-ref (hash-ref grid 'cells) (list x y) (make-hash))]
+    [(x y key)
+     (let ([cell (hash-ref (hash-ref grid 'cells) (list x y) (make-hash))])
+       (hash-ref cell key #f))]))
+
+(define (get dict property)
+  (if (dictionary? dict)
+      (dictionary-ref dict property)
+      #f))
+
+(define delete-cell!
+  (case-lambda
     [(x y key)
      (let* ([cells (hash-ref grid 'cells)]
-            [cell (hash-ref cells (list x y) (make-hash))])
-       (hash-ref cell key #f))]
-    [(x y key default)
+            [cell  (hash-ref cells (list x y) #f)])
+       (when cell
+         (hash-remove! cell key)))]
+    [(x y key property)
      (let* ([cells (hash-ref grid 'cells)]
-            [cell (hash-ref cells (list x y) (make-hash))])
-       (hash-ref cell key default))]))
+            [cell  (hash-ref cells (list x y) #f)])
+       (when cell
+         (let ([dict (hash-ref cell key #f)])
+           (when (dictionary? dict)
+             (hash-set! cell key (dictionary-remove dict property))))))]))
 
-(define (delete-cell! x y key)
-  (let* ([cells (hash-ref grid 'cells)]
-         [cell (hash-ref cells (list x y) #f)])
-    (when cell
-      (hash-remove! cell key))))
+;; Get all cells with a given key, returns list of (x y value)
 
-;; Get all cells with a given key, returns list of (x y data)
 (define (get-all-cells key)
   (filter-map (lambda (coord)
                 (let* ([x (first coord)]
@@ -69,7 +97,8 @@
                       #f)))
               (all-coordinates)))
 
-;; Get any one cell with a given key, returns (x y data) or #f
+;; Get any one cell with a given key, returns (x y value) or #f
+
 (define (get-any-cell key)
   (let ([result (findf (lambda (coord)
                          (hash-has-key? (get-cell (first coord) (second coord)) key))
@@ -79,6 +108,8 @@
                (second result)
                (get-cell (first result) (second result) key)))))
 
+;; Movement & collision
+
 (define (move-cells! key dx dy)
   (define cells-to-move (get-all-cells key))
   (for ([cell cells-to-move])
@@ -86,7 +117,7 @@
     (delete-cell! x y key))
   (for ([cell cells-to-move])
     (match-define (list x y data) cell)
-    (set-cell! (+ x dx) (+ y dy) key data)))
+    (cell-set! (+ x dx) (+ y dy) key data)))
 
 (define (bounds key)
   (define cells (get-all-cells key))
@@ -118,27 +149,22 @@
 ;; Grid (global) data
 
 (define (set-grid! key value)
-  (let ([data (hash-ref grid 'data)])
-    (hash-set! data key value)))
+  (hash-set! (hash-ref grid 'data) key value))
 
-(define (get-grid key [default #f])
-  (let ([data (hash-ref grid 'data)])
-    (hash-ref data key default)))
+(define (get-grid key)
+  (hash-ref (hash-ref grid 'data) key #f))
 
 (define (delete-grid! key)
-  (let ([data (hash-ref grid 'data)])
-    (hash-remove! data key)))
+  (hash-remove! (hash-ref grid 'data) key))
 
-;; Global operations
+;; Grid-wide operations
 
 (define (all-coordinates)
   (hash-ref grid 'coordinates))
 
 (define (delete-all! key)
   (for ([coord (all-coordinates)])
-    (let ([x (first coord)]
-          [y (second coord)])
-      (delete-cell! x y key))))
+    (delete-cell! (first coord) (second coord) key)))
 
 (define clear!
   (case-lambda

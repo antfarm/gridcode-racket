@@ -46,8 +46,8 @@
 
     (cond
       [(get-cell new-x new-y 'wall)
-       (define new-dx (get-cell new-x new-y 'dx dx))
-       (define new-dy (get-cell new-x new-y 'dy dy))
+       (define new-dx (or (get-cell new-x new-y 'dx) dx))
+       (define new-dy (or (get-cell new-x new-y 'dy) dy))
        (set-cell! (+ ball-x new-dx) (+ ball-y new-dy) 'ball (list new-dx new-dy))]
 
       [(get-cell ball-x new-y 'paddle)

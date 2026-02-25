@@ -11,50 +11,52 @@
    (define rows grid-size)
 
    (for ((y (in-range rows)))
-     (set-cell! 0 y 'wall #t)
-     (set-cell! 0 y 'dx 1)
-     (set-cell! (- columns 1) y 'wall #t)
-     (set-cell! (- columns 1) y 'dx -1))
+     (set-cell! 0 y 'wall 'dx 1)
+     (set-cell! (- columns 1) y 'wall 'dx -1))
 
    (for ((x (in-range columns)))
-     (set-cell! x 0 'wall #t)
-     (set-cell! x 0 'dy 1)
-     (set-cell! x (- rows 1) 'out #t))
+     (set-cell! x 0 'wall 'dy 1)
+     (set-cell! x (- rows 1) 'out))
 
    (define center (quotient rows 2))
    (define paddle-range (range (- center 2) (+ center 3)))
    (for ((x paddle-range))
-     (set-cell! x (- rows 1) 'paddle #t))
+     (set-cell! x (- rows 1) 'paddle))
 
    (define ball-x (list-ref paddle-range (random (length paddle-range))))
-   (define dx (list-ref '(-1 1) (random 2)))
-   (set-cell! ball-x (- rows 2) 'ball (list dx -1)))
+   (set-cell! ball-x (- rows 2) 'ball 'dx (if (equal? 0 (random 2)) -1 1))
+   (set-cell! ball-x (- rows 2) 'ball 'dy -1))
 
  (define (update-grid)
    (define ball-cell (get-any-cell 'ball))
    (when ball-cell
-     (define-list (ball-x ball-y ball-vel) ball-cell)
-     (define-list (dx dy) ball-vel)
+     (define-list (ball-x ball-y ball) ball-cell)
+     (define dx (get ball 'dx))
+     (define dy (get ball 'dy))
      (define new-x (+ ball-x dx))
      (define new-y (+ ball-y dy))
 
      (delete-cell! ball-x ball-y 'ball)
 
+     (define wall (get-cell new-x new-y 'wall))
      (cond
-       ((get-cell new-x new-y 'wall)
-        (define new-dx (get-cell new-x new-y 'dx dx))
-        (define new-dy (get-cell new-x new-y 'dy dy))
-        (set-cell! (+ ball-x new-dx) (+ ball-y new-dy) 'ball (list new-dx new-dy)))
+       (wall
+        (define new-dx (or (get wall 'dx) dx))
+        (define new-dy (or (get wall 'dy) dy))
+        (set-cell! (+ ball-x new-dx) (+ ball-y new-dy) 'ball 'dx new-dx)
+        (set-cell! (+ ball-x new-dx) (+ ball-y new-dy) 'ball 'dy new-dy))
 
        ((get-cell ball-x new-y 'paddle)
         (define new-dx (list-ref '(-1 1) (random 2)))
-        (set-cell! (+ ball-x new-dx) (- ball-y 1) 'ball (list new-dx -1)))
+        (set-cell! (+ ball-x new-dx) (- ball-y 1) 'ball 'dx new-dx)
+        (set-cell! (+ ball-x new-dx) (- ball-y 1) 'ball 'dy -1))
 
        ((get-cell new-x new-y 'out)
-        (set-cell! ball-x new-y 'ball-out (list 0 0)))
+        (set-cell! ball-x new-y 'ball-out))
 
        (else
-        (set-cell! new-x new-y 'ball (list dx dy))))))
+        (set-cell! new-x new-y 'ball 'dx dx)
+        (set-cell! new-x new-y 'ball 'dy dy)))))
 
  (define (color-for-cell x y)
    (cond

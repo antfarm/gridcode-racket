@@ -1,6 +1,6 @@
 # gridcode
 
-A simple grid-based simulation framework for computational exploration.
+A minimalistic grid-based simulation/game framework.
 
 ## Installation
 
