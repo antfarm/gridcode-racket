@@ -13,7 +13,10 @@
          select-at
          offset
          one
-         nearest)
+         nearest
+         union
+         intersection
+         difference)
 
 (define select
   (case-lambda
@@ -104,6 +107,15 @@
   (if (set-empty? coords)
       (set)
       (set (set-first coords))))
+
+(define (union . sets)
+  (apply set-union sets))
+
+(define (intersection . sets)
+  (apply set-intersect sets))
+
+(define (difference s . sets)
+  (apply set-subtract s sets))
 
 (define (nearest x y coords)
   (if (set-empty? coords)

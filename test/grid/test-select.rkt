@@ -139,6 +139,32 @@
 (test-case "offset — empty set returns empty set"
   (check-equal? (offset (set) 1 1) (set)))
 
+;; union / intersection / difference
+
+(test-case "union — combines two sets"
+  (check-equal? (union (set '(1 1)) (set '(2 2)))
+                (set '(1 1) '(2 2))))
+
+(test-case "union — deduplicates overlapping elements"
+  (check-equal? (union (set '(1 1) '(2 2)) (set '(2 2) '(3 3)))
+                (set '(1 1) '(2 2) '(3 3))))
+
+(test-case "intersection — returns common elements"
+  (check-equal? (intersection (set '(1 1) '(2 2)) (set '(2 2) '(3 3)))
+                (set '(2 2))))
+
+(test-case "intersection — returns empty set when no overlap"
+  (check-equal? (intersection (set '(1 1)) (set '(2 2)))
+                (set)))
+
+(test-case "difference — subtracts second from first"
+  (check-equal? (difference (set '(1 1) '(2 2)) (set '(2 2)))
+                (set '(1 1))))
+
+(test-case "difference — no change when sets are disjoint"
+  (check-equal? (difference (set '(1 1)) (set '(2 2)))
+                (set '(1 1))))
+
 ;; one
 
 (test-case "one — empty set returns empty set"
