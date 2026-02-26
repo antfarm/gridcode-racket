@@ -9,79 +9,79 @@
  (define (setup-grid)
    (define columns grid-size)
    (define rows grid-size)
-
-   (for ((y (in-range rows)))
-     (set-cell! 0 y 'wall 'dx 1)
-     (set-cell! (- columns 1) y 'wall 'dx -1))
-
-   (for ((x (in-range columns)))
-     (set-cell! x 0 'wall 'dy 1)
-     (set-cell! x (- rows 1) 'out))
-
    (define center (quotient rows 2))
-   (define paddle-range (range (- center 2) (+ center 3)))
-   (for ((x paddle-range))
-     (set-cell! x (- rows 1) 'paddle))
 
-   (define ball-x (list-ref paddle-range (random (length paddle-range))))
-   (set-cell! ball-x (- rows 2) 'ball 'dx (if (equal? 0 (random 2)) -1 1))
-   (set-cell! ball-x (- rows 2) 'ball 'dy -1))
+   (with (select-column 0) as (x y)
+         (set-cell! x y 'wall 'dx 1))
+   (with (select-column (- columns 1)) as (x y)
+         (set-cell! x y 'wall 'dx -1))
+   (with (select-row 0) as (x y)
+         (set-cell! x y 'wall 'dy 1))
+   (with (select-row (- rows 1)) as (x y)
+         (set-cell! x y 'out))
+
+   (with (union (select-xy center (- rows 1))
+                (select-neighbors center (- rows 1) 'horizontal 2)) as (x y)
+                                                                    (set-cell! x y 'paddle))
+
+
+   (with (select-xy (+ (- center 2) (random 5)) (- rows 2)) as (ball-x ball-y)
+         (set-cell! ball-x ball-y 'ball 'dx (list-ref '(-1 1) (random 2)))
+         (set-cell! ball-x ball-y 'ball 'dy -1)))
 
  (define (update-grid)
-   (define ball-cell (get-any-cell 'ball))
-   (when ball-cell
-     (define-list (ball-x ball-y ball) ball-cell)
-     (define dx (get ball 'dx))
-     (define dy (get ball 'dy))
-     (define new-x (+ ball-x dx))
-     (define new-y (+ ball-y dy))
+   (with (select 'ball) as (ball-x ball-y)
+         (define ball (get-cell ball-x ball-y 'ball))
+         (define dx (get ball 'dx))
+         (define dy (get ball 'dy))
 
-     (delete-cell! ball-x ball-y 'ball)
+         (with (select-xy (+ ball-x dx) (+ ball-y dy)) as (new-x new-y)
+               (cond
+                 ((exists-at? (select 'wall) new-x new-y)
+                  (define wall (get-cell new-x new-y 'wall))
+                  (define new-dx (or (get wall 'dx) dx))
+                  (define new-dy (or (get wall 'dy) dy))
+                  (with (select-xy (+ ball-x new-dx) (+ ball-y new-dy)) as (bx by)
+                        (move-to! 'ball bx by)
+                        (set-cell! bx by 'ball 'dx new-dx)
+                        (set-cell! bx by 'ball 'dy new-dy)))
 
-     (define wall (get-cell new-x new-y 'wall))
-     (cond
-       (wall
-        (define new-dx (or (get wall 'dx) dx))
-        (define new-dy (or (get wall 'dy) dy))
-        (set-cell! (+ ball-x new-dx) (+ ball-y new-dy) 'ball 'dx new-dx)
-        (set-cell! (+ ball-x new-dx) (+ ball-y new-dy) 'ball 'dy new-dy))
+                 ((exists-at? (select 'paddle) ball-x new-y)
+                  (define new-dx (list-ref '(-1 1) (random 2)))
+                  (with (select-xy (+ ball-x new-dx) (- ball-y 1)) as (bx by)
+                        (move-to! 'ball bx by)
+                        (set-cell! bx by 'ball 'dx new-dx)
+                        (set-cell! bx by 'ball 'dy -1)))
 
-       ((get-cell ball-x new-y 'paddle)
-        (define new-dx (list-ref '(-1 1) (random 2)))
-        (set-cell! (+ ball-x new-dx) (- ball-y 1) 'ball 'dx new-dx)
-        (set-cell! (+ ball-x new-dx) (- ball-y 1) 'ball 'dy -1))
+                 ((exists-at? (select 'out) new-x new-y)
+                  (delete-cell! ball-x ball-y 'ball)
+                  (set-cell! ball-x new-y 'ball-out))
 
-       ((get-cell new-x new-y 'out)
-        (set-cell! ball-x new-y 'ball-out))
-
-       (else
-        (set-cell! new-x new-y 'ball 'dx dx)
-        (set-cell! new-x new-y 'ball 'dy dy)))))
+                 (else
+                  (move-to! 'ball new-x new-y))))))
 
  (define (color-for-cell x y)
    (cond
-     ((get-cell x y 'wall) (color 1.0 1.0 1.0))
+     ((get-cell x y 'wall)     (color 1.0 1.0 1.0))
      ((get-cell x y 'ball-out) (color 1.0 0.0 0.0))
-     ((get-cell x y 'ball) (color 0.2 0.9 0.0))
-     ((get-cell x y 'paddle) (color 1.0 0.8 0.2))
-     (else (color 0.0 0.0 0.0))))
+     ((get-cell x y 'ball)     (color 0.2 0.9 0.0))
+     ((get-cell x y 'paddle)   (color 1.0 0.8 0.2))
+     (else                     (color 0.0 0.0 0.0))))
 
  (define (info-for-cell x y)
    (format "(~a,~a) ~a" x y (get-cell x y)))
 
  (define (handle-cell-tapped x _y)
-   (if (< x (quotient grid-size 2))
-       (move-paddle 'left)
-       (move-paddle 'right)))
+   (move-paddle (if (< x (quotient grid-size 2)) 'left 'right)))
 
  (define (handle-key-pressed key)
    (cond
-     ((eq? key 'left) (move-paddle 'left))
-     ((eq? key 'right) (move-paddle 'right))
-     ((eq? key #\space) (begin (clear!) (setup-grid)))
-     (else (void))))
+     ((eq? key 'left)   (move-paddle 'left))
+     ((eq? key 'right)  (move-paddle 'right))
+     ((eq? key #\space) (clear!) (setup-grid))
+     (else              (void))))
 
  (define (move-paddle dir)
-   (define dx (if (equal? dir 'left) -1 1))
-   (unless (collides-at? 'paddle dx 0 'wall)
-     (move-cells! 'paddle dx 0))))
+   (define dx (if (eq? dir 'left) -1 1))
+   (when (set-empty? (intersection (offset (select 'paddle) dx 0) (select 'wall)))
+     (move-by! 'paddle dx 0))))
