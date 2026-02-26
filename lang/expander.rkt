@@ -8,7 +8,28 @@
 (provide (all-from-out racket)
          (all-from-out gridcode/grid/main)
          program
-         define-list)
+         define-list
+         with
+         with-any)
+
+(define-syntax with
+  (syntax-rules (as)
+    [(with selector as (x y) body ...)
+     (for ([coord (in-set selector)])
+       (let ([x (first coord)]
+             [y (second coord)])
+         body ...))]))
+
+(define-syntax with-any
+  (syntax-rules (as)
+    [(with-any selector as (x y) body ...)
+     (let ([coords selector])
+       (unless (set-empty? coords)
+         (let* ([coord (set-first coords)]
+                [x     (first coord)]
+                [y     (second coord)])
+           body ...)))]))
+
 
 (define-syntax (program stx)
   (syntax-case stx ()
