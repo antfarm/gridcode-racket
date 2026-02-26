@@ -19,7 +19,6 @@
     (init! grid-size)
     ((hash-ref prog 'setup-grid))
     (emit 'grid-updated)
-    (print-inspected-cell)
     (when (unbox running?)
       (start-loop)))
 
@@ -32,17 +31,18 @@
                          (~r elapsed #:precision 2)
                          (~r (/ 1000.0 elapsed) #:precision 1)))
     (emit 'grid-updated)
-    (print-inspected-cell)
     (yield))
 
   (define (color-for-cell x y)
     ((hash-ref prog 'color-for-cell) x y))
 
   (define (handle-cell-tapped x y)
-    ((hash-ref prog 'handle-cell-tapped) x y))
+    ((hash-ref prog 'handle-cell-tapped) x y)
+    (emit 'grid-updated))
 
   (define (handle-key-pressed key)
-    ((hash-ref prog 'handle-key-pressed) key))
+    ((hash-ref prog 'handle-key-pressed) key)
+    (emit 'grid-updated))
 
   ;; Run Loop
 
@@ -82,6 +82,8 @@
       (define coords (unbox inspected-cell))
       (displayln ((hash-ref prog 'info-for-cell) (first coords) (second coords))))
     )
+
+  (on 'grid-updated print-inspected-cell)
 
   ;; Public Interface
 
