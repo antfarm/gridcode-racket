@@ -71,6 +71,16 @@
 (test-case "select-xy — returns set with single coordinate"
   (check-equal? (select-xy 3 5) (set '(3 5))))
 
+;; select-column / select-row
+
+(test-case "select-column — returns all cells in column"
+  (init! 3)
+  (check-equal? (select-column 1) (set '(1 0) '(1 1) '(1 2))))
+
+(test-case "select-row — returns all cells in row"
+  (init! 3)
+  (check-equal? (select-row 2) (set '(0 2) '(1 2) '(2 2))))
+
 ;; select-neighbors (moore)
 
 (test-case "select-neighbors — moore r=1 returns 8 cells"

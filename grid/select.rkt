@@ -7,6 +7,8 @@
 (provide select
          select-all
          select-xy
+         select-column
+         select-row
          select-neighbors
          select-at
          offset
@@ -55,6 +57,16 @@
 
 (define (select-xy x y)
   (set (list x y)))
+
+(define (select-column x)
+  (list->set
+   (filter (lambda (coord) (= (first coord) x))
+           (all-coordinates))))
+
+(define (select-row y)
+  (list->set
+   (filter (lambda (coord) (= (second coord) y))
+           (all-coordinates))))
 
 (define (select-at deltas x y)
   (list->set
