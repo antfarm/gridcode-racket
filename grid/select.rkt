@@ -9,7 +9,9 @@
          select-xy
          select-neighbors
          select-at
-         offset)
+         offset
+         one
+         nearest)
 
 (define select
   (case-lambda
@@ -85,3 +87,19 @@
 (define (offset coords dx dy)
   (list->set
    (set-map coords (lambda (c) (list (+ (first c) dx) (+ (second c) dy))))))
+
+(define (one coords)
+  (if (set-empty? coords)
+      (set)
+      (set (set-first coords))))
+
+(define (nearest x y coords)
+  (if (set-empty? coords)
+      (set)
+      (let* ([coord-list (set->list coords)]
+             [closest (argmin (lambda (c)
+                                (let ([dx (- (first c) x)]
+                                      [dy (- (second c) y)])
+                                  (+ (* dx dx) (* dy dy))))
+                              coord-list)])
+        (set closest))))

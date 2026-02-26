@@ -128,3 +128,31 @@
 
 (test-case "offset — empty set returns empty set"
   (check-equal? (offset (set) 1 1) (set)))
+
+;; one
+
+(test-case "one — empty set returns empty set"
+  (check-equal? (one (set)) (set)))
+
+(test-case "one — single element returns that element"
+  (check-equal? (one (set '(3 4))) (set '(3 4))))
+
+(test-case "one — multiple elements returns exactly one"
+  (check-equal? (set-count (one (set '(1 1) '(2 2) '(3 3)))) 1))
+
+;; nearest
+
+(test-case "nearest — empty set returns empty set"
+  (check-equal? (nearest 5 5 (set)) (set)))
+
+(test-case "nearest — single element returns that element"
+  (check-equal? (nearest 5 5 (set '(5 5))) (set '(5 5))))
+
+(test-case "nearest — returns closest coordinate"
+  (check-equal? (nearest 0 0 (set '(1 0) '(5 0) '(10 0))) (set '(1 0))))
+
+(test-case "nearest — uses euclidean distance"
+  (check-equal? (nearest 0 0 (set '(3 0) '(2 2))) (set '(2 2))))
+
+(test-case "nearest — returns exactly one element"
+  (check-equal? (set-count (nearest 5 5 (set '(3 5) '(8 5)))) 1))
