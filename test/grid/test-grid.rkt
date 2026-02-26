@@ -1,7 +1,8 @@
 #lang racket
 
 (require rackunit
-         gridcode/grid/grid)
+         gridcode/grid/grid
+         gridcode/grid/select)
 
 ;; Cell data
 
@@ -241,3 +242,69 @@
            (clear! '(key1))
            (check-false (get-cell 5 5 'key1))
            (check-true (get-cell 5 5 'key2)))
+
+;; move-by!
+
+(test-case "move-by! — moves a single cell by dx dy"
+  (init! 10)
+  (set-cell! 2 2 'foo)
+  (move-by! (select 'foo) 1 0)
+  (check-false (get-cell 2 2 'foo))
+  (check-true  (get-cell 3 2 'foo)))
+
+(test-case "move-by! — preserves scalar value"
+  (init! 10)
+  (set-cell! 2 2 'foo 42)
+  (move-by! (select 'foo) 0 1)
+  (check-equal? (get-cell 2 3 'foo) 42))
+
+(test-case "move-by! — preserves dictionary data"
+  (init! 10)
+  (set-cell! 2 2 'ball 'dx 1)
+  (set-cell! 2 2 'ball 'dy -1)
+  (move-by! (select 'ball) 1 1)
+  (check-equal? (get (get-cell 3 3 'ball) 'dx) 1)
+  (check-equal? (get (get-cell 3 3 'ball) 'dy) -1))
+
+(test-case "move-by! — moves multiple cells"
+  (init! 10)
+  (set-cell! 1 1 'foo)
+  (set-cell! 2 2 'foo)
+  (move-by! (select 'foo) 1 0)
+  (check-false (get-cell 1 1 'foo))
+  (check-false (get-cell 2 2 'foo))
+  (check-true  (get-cell 2 1 'foo))
+  (check-true  (get-cell 3 2 'foo)))
+
+(test-case "move-by! — moves all keys at selected cells"
+  (init! 10)
+  (set-cell! 2 2 'foo)
+  (set-cell! 2 2 'bar)
+  (move-by! (select 'foo) 1 0)
+  (check-false (get-cell 2 2 'foo))
+  (check-false (get-cell 2 2 'bar))
+  (check-true  (get-cell 3 2 'foo))
+  (check-true  (get-cell 3 2 'bar)))
+
+(test-case "move-by! — does nothing for empty selector"
+  (init! 10)
+  (check-not-exn (lambda () (move-by! (select 'foo) 1 0))))
+
+;; move-to!
+
+(test-case "move-to! — moves a single cell to absolute position"
+  (init! 10)
+  (set-cell! 1 1 'foo)
+  (move-to! (select 'foo) 7 8)
+  (check-false (get-cell 1 1 'foo))
+  (check-true  (get-cell 7 8 'foo)))
+
+(test-case "move-to! — preserves scalar value"
+  (init! 10)
+  (set-cell! 1 1 'foo 99)
+  (move-to! (select 'foo) 5 5)
+  (check-equal? (get-cell 5 5 'foo) 99))
+
+(test-case "move-to! — does nothing for empty selector"
+  (init! 10)
+  (check-not-exn (lambda () (move-to! (select 'foo) 5 5))))

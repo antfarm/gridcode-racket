@@ -18,6 +18,8 @@
          collides?
          collides-at?
          move-cells!
+         move-by!
+         move-to!
          all-coordinates)
 
 ;; Internal grid state
@@ -110,6 +112,28 @@
                (get-cell (first result) (second result) key)))))
 
 ;; Movement & collision
+
+(define (move-by! coords dx dy)
+  (define moves
+    (for/list ([coord (in-set coords)])
+      (list (first coord) (second coord) (hash-copy (get-cell (first coord) (second coord))))))
+  (for ([move moves])
+    (for ([key (hash-keys (third move))])
+      (delete-cell! (first move) (second move) key)))
+  (for ([move moves])
+    (for ([(key val) (in-hash (third move))])
+      (cell-set! (+ (first move) dx) (+ (second move) dy) key val))))
+
+(define (move-to! coords tx ty)
+  (define moves
+    (for/list ([coord (in-set coords)])
+      (list (first coord) (second coord) (hash-copy (get-cell (first coord) (second coord))))))
+  (for ([move moves])
+    (for ([key (hash-keys (third move))])
+      (delete-cell! (first move) (second move) key)))
+  (for ([move moves])
+    (for ([(key val) (in-hash (third move))])
+      (cell-set! tx ty key val))))
 
 (define (move-cells! key dx dy)
   (define cells-to-move (get-all-cells key))
