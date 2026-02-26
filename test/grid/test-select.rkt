@@ -17,6 +17,11 @@
   (init! 10)
   (check-equal? (select 'wall) (set)))
 
+(test-case "select — finds cells with #f value"
+  (init! 10)
+  (set-cell! 3 3 'foo #f)
+  (check-equal? (select 'foo) (set '(3 3))))
+
 ;; select (key property)
 
 (test-case "select — filters cells with dictionary property present"

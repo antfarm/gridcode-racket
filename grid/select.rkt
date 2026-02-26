@@ -16,7 +16,7 @@
     [(key)
      (list->set
       (map (lambda (c) (list (first c) (second c)))
-           (get-all-cells key)))]
+           (cells-with-key key)))]
     [(key property)
      (list->set
       (filter-map (lambda (c)
@@ -24,19 +24,29 @@
                     (and (dictionary? val)
                          (dictionary-ref val property)
                          (list (first c) (second c))))
-                  (get-all-cells key)))]
+                  (cells-with-key key)))]
     [(key property value)
      (list->set
       (filter-map (lambda (c)
                     (define val   (third c))
                     (define pval  (and (dictionary? val)
-                                      (dictionary-ref val property)))
+                                       (dictionary-ref val property)))
                     (and pval
                          (if (list? value)
                              (member pval value)
                              (equal? pval value))
                          (list (first c) (second c))))
-                  (get-all-cells key)))]))
+                  (cells-with-key key)))]))
+
+(define (cells-with-key key)
+  (filter-map (lambda (coord)
+                (let* ([x (first coord)]
+                       [y (second coord)]
+                       [cell (get-cell x y)])
+                  (if (hash-has-key? cell key)
+                      (list x y (hash-ref cell key))
+                      #f)))
+              (all-coordinates)))
 
 (define (select-all)
   (list->set (all-coordinates)))
@@ -61,7 +71,7 @@
                (list dx dy)))]
     [(von-neumann)
      (filter (lambda (d) (and (not (equal? d '(0 0)))
-                               (<= (+ (abs (first d)) (abs (second d))) r)))
+                              (<= (+ (abs (first d)) (abs (second d))) r)))
              (for*/list ([dx (in-range (- r) (+ r 1))]
                          [dy (in-range (- r) (+ r 1))])
                (list dx dy)))]
