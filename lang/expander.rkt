@@ -9,8 +9,7 @@
          (all-from-out gridcode/grid/main)
          program
          define-list
-         with
-         with-any)
+         with)
 
 (define-syntax with
   (syntax-rules (as)
@@ -19,16 +18,6 @@
        (let ([x (first coord)]
              [y (second coord)])
          body ...))]))
-
-(define-syntax with-any
-  (syntax-rules (as)
-    [(with-any selector as (x y) body ...)
-     (let ([coords selector])
-       (unless (set-empty? coords)
-         (let* ([coord (set-first coords)]
-                [x     (first coord)]
-                [y     (second coord)])
-           body ...)))]))
 
 
 (define-syntax (program stx)
