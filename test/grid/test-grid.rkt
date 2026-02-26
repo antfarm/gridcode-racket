@@ -308,3 +308,36 @@
 (test-case "move-to! — does nothing for empty selector"
   (init! 10)
   (check-not-exn (lambda () (move-to! (select 'foo) 5 5))))
+
+;; exists-at?
+
+(test-case "exists-at? — returns #t when selector contains (x y)"
+  (init! 10)
+  (set-cell! 3 4 'foo)
+  (check-true (exists-at? (select 'foo) 3 4)))
+
+(test-case "exists-at? — returns #f when (x y) is not in selector"
+  (init! 10)
+  (set-cell! 3 4 'foo)
+  (check-false (exists-at? (select 'foo) 5 5)))
+
+(test-case "exists-at? — returns #f for empty selector"
+  (init! 10)
+  (check-false (exists-at? (select 'foo) 3 4)))
+
+;; bounds-of
+
+(test-case "bounds-of — returns bounding box"
+  (init! 10)
+  (set-cell! 2 3 'foo)
+  (set-cell! 5 1 'foo)
+  (check-equal? (bounds-of (select 'foo)) '(2 5 1 3)))
+
+(test-case "bounds-of — returns #f for empty selector"
+  (init! 10)
+  (check-false (bounds-of (select 'foo))))
+
+(test-case "bounds-of — single cell returns equal min and max"
+  (init! 10)
+  (set-cell! 4 7 'foo)
+  (check-equal? (bounds-of (select 'foo)) '(4 4 7 7)))

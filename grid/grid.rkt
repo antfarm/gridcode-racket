@@ -20,7 +20,9 @@
          move-cells!
          move-by!
          move-to!
-         all-coordinates)
+         all-coordinates
+         exists-at?
+         bounds-of)
 
 ;; Internal grid state
 
@@ -150,6 +152,18 @@
       #f
       (let ([xs (map first cells)]
             [ys (map second cells)])
+        (list (apply min xs) (apply max xs)
+              (apply min ys) (apply max ys)))))
+
+(define (exists-at? coords x y)
+  (set-member? coords (list x y)))
+
+(define (bounds-of coords)
+  (if (set-empty? coords)
+      #f
+      (let* ([coord-list (set->list coords)]
+             [xs (map first coord-list)]
+             [ys (map second coord-list)])
         (list (apply min xs) (apply max xs)
               (apply min ys) (apply max ys)))))
 
