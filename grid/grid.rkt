@@ -87,27 +87,36 @@
 
 ;; Movement
 
-(define (move-by! coords dx dy)
-  (define moves
-    (for/list ([coord (in-set coords)])
-      (list (first coord) (second coord) (hash-copy (get-cell (first coord) (second coord))))))
-  (for ([move moves])
-    (for ([key (hash-keys (third move))])
-      (delete-cell! (first move) (second move) key)))
-  (for ([move moves])
-    (for ([(key val) (in-hash (third move))])
-      (cell-set! (+ (first move) dx) (+ (second move) dy) key val))))
+(define (coords-with-key key)
+  (for/set ([coord (in-list (all-coordinates))]
+            #:when (hash-has-key? (hash-ref (hash-ref grid 'cells) coord (make-hash)) key))
+    coord))
 
-(define (move-to! coords tx ty)
-  (define moves
-    (for/list ([coord (in-set coords)])
-      (list (first coord) (second coord) (hash-copy (get-cell (first coord) (second coord))))))
-  (for ([move moves])
-    (for ([key (hash-keys (third move))])
-      (delete-cell! (first move) (second move) key)))
-  (for ([move moves])
-    (for ([(key val) (in-hash (third move))])
-      (cell-set! tx ty key val))))
+(define move-by!
+  (case-lambda
+    [(key dx dy)
+     (move-by! key (coords-with-key key) dx dy)]
+    [(key coords dx dy)
+     (define moves
+       (for/list ([coord (in-set coords)])
+         (list (first coord) (second coord) (get-cell (first coord) (second coord) key))))
+     (for ([move moves])
+       (delete-cell! (first move) (second move) key))
+     (for ([move moves])
+       (cell-set! (+ (first move) dx) (+ (second move) dy) key (third move)))]))
+
+(define move-to!
+  (case-lambda
+    [(key tx ty)
+     (move-to! key (coords-with-key key) tx ty)]
+    [(key coords tx ty)
+     (define moves
+       (for/list ([coord (in-set coords)])
+         (list (first coord) (second coord) (get-cell (first coord) (second coord) key))))
+     (for ([move moves])
+       (delete-cell! (first move) (second move) key))
+     (for ([move moves])
+       (cell-set! tx ty key (third move)))]))
 
 (define (exists-at? coords x y)
   (set-member? coords (list x y)))
