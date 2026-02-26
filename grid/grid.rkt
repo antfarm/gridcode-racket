@@ -17,7 +17,8 @@
          bounds
          collides?
          collides-at?
-         move-cells!)
+         move-cells!
+         all-coordinates)
 
 ;; Internal grid state
 
