@@ -10,3 +10,6 @@
 ;; To re-install:
 ;;   raco pkg remove gridcode
 ;;   raco pkg install --link ../gridcode
+
+;; To recompile:
+;;   raco setup --pkgs gridcode
