@@ -11,6 +11,8 @@
          get-grid
          delete-grid!
          clear!
+         clear-cells!
+         clear-grid!
          move-by!
          move-to!
          all-coordinates
@@ -135,12 +137,26 @@
 (define (all-coordinates)
   (hash-ref grid 'coordinates))
 
-(define clear!
+(define (normalize-keys key-or-keys)
+  (if (list? key-or-keys) key-or-keys (list key-or-keys)))
+
+(define clear-cells!
   (case-lambda
     [()
-     (hash-set! grid 'cells (make-hash))
-     (hash-set! grid 'data (make-hash))]
-    [(keys)
-     (for ([k keys])
+     (hash-set! grid 'cells (make-hash))]
+    [(key-or-keys)
+     (for ([k (normalize-keys key-or-keys)])
        (for ([coord (all-coordinates)])
          (delete-cell! (first coord) (second coord) k)))]))
+
+(define clear-grid!
+  (case-lambda
+    [()
+     (hash-set! grid 'data (make-hash))]
+    [(key-or-keys)
+     (for ([k (normalize-keys key-or-keys)])
+       (delete-grid! k))]))
+
+(define (clear!)
+  (clear-cells!)
+  (clear-grid!))

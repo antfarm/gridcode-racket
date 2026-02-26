@@ -124,13 +124,57 @@
            (check-false (get-cell 5 5 'key1))
            (check-false (get-grid 'key1)))
 
-(test-case "clear! with keys — removes only specified keys"
+(test-case "clear-cells! — resets all cell data, leaves grid data"
+           (init! 10)
+           (set-cell! 5 5 'key1)
+           (set-grid! 'key1 1)
+           (clear-cells!)
+           (check-false (get-cell 5 5 'key1))
+           (check-equal? (get-grid 'key1) 1))
+
+(test-case "clear-cells! with single key — removes only that key"
            (init! 10)
            (set-cell! 5 5 'key1)
            (set-cell! 5 5 'key2)
-           (clear! '(key1))
+           (clear-cells! 'key1)
            (check-false (get-cell 5 5 'key1))
-           (check-true (get-cell 5 5 'key2)))
+           (check-true  (get-cell 5 5 'key2)))
+
+(test-case "clear-cells! with key list — removes only listed keys"
+           (init! 10)
+           (set-cell! 5 5 'key1)
+           (set-cell! 5 5 'key2)
+           (set-cell! 5 5 'key3)
+           (clear-cells! '(key1 key2))
+           (check-false (get-cell 5 5 'key1))
+           (check-false (get-cell 5 5 'key2))
+           (check-true  (get-cell 5 5 'key3)))
+
+(test-case "clear-grid! — resets all grid data, leaves cell data"
+           (init! 10)
+           (set-cell! 5 5 'key1)
+           (set-grid! 'key1 1)
+           (clear-grid!)
+           (check-true  (get-cell 5 5 'key1))
+           (check-false (get-grid 'key1)))
+
+(test-case "clear-grid! with single key — removes only that key"
+           (init! 10)
+           (set-grid! 'key1 1)
+           (set-grid! 'key2 2)
+           (clear-grid! 'key1)
+           (check-false   (get-grid 'key1))
+           (check-equal?  (get-grid 'key2) 2))
+
+(test-case "clear-grid! with key list — removes only listed keys"
+           (init! 10)
+           (set-grid! 'key1 1)
+           (set-grid! 'key2 2)
+           (set-grid! 'key3 3)
+           (clear-grid! '(key1 key2))
+           (check-false  (get-grid 'key1))
+           (check-false  (get-grid 'key2))
+           (check-equal? (get-grid 'key3) 3))
 
 ;; move-by!
 
