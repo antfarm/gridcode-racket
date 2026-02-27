@@ -1,4 +1,4 @@
-# gridcode
+# GridCode
 
 A minimalistic grid-based simulation/game framework.
 
@@ -40,7 +40,7 @@ raco pkg install --link ../gridcode
 
 ## Usage
 
-Programs are written using the GridCode DSL in `.grid` files with the `#lang gridcode` language. For reference, have a look at the [example programs](/examples).
+Programs are written using the GridCode DSL in `.grid` files with the `#lang gridcode` language. For reference, see the [API Guide](/API.md) or have a look at the [example programs](/examples).
 
 Run the examples:
 ```bash

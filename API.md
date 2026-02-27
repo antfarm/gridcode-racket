@@ -1,192 +1,308 @@
- # Public Grid API
+# GridCode API Reference Guide
 
-(for use in GridCode programs)
+For code examples that illustrate how to use the API see [Usage Examples](#usage-examples) on this page and have a look at the [example programs](/examples).
 
 ---
 
-## Cell Data
+## Reference
 
-### Presence
+### Cell Data
 
-Mark a cell as occupied. The value is always `#t`.
+| Signature | Description | Returns |
+|---|---|---|
+| `(set-cell! x y key)` | Mark cell as having key (presence) | void |
+| `(set-cell! x y key value)` | Store a scalar value under key | void |
+| `(set-cell! x y key property value)` | Set a property on key's dictionary | void |
+| `(get-cell x y)` | All keys on a cell | hash |
+| `(get-cell x y key)` | Value stored under key | dictionary \| value \| #t \| #f |
+| `(get dictionary property)` | Read a property from a dictionary | value \| #f |
+| `(delete-cell! x y key)` | Remove key from cell | void |
+| `(delete-cell! x y key property)` | Remove one property from key's dictionary | void |
 
+### Global Data
+
+| Signature | Description | Returns |
+|---|---|---|
+| `(set-grid! key value)` | Store a program-level value | void |
+| `(get-grid key)` | Read a program-level value | value \| #f |
+| `(delete-grid! key)` | Remove a program-level value | void |
+
+### Clear Operations
+
+| Signature | Description |
+|---|---|
+| `(clear!)` | Reset all cell data and global data |
+| `(clear-cells!)` | Reset all cell data, keep global data |
+| `(clear-cells! key-or-keys)` | Remove key(s) from every cell |
+| `(clear-grid!)` | Reset all global data, keep cell data |
+
+### Coordinate Selectors
+
+| Signature | Description | Returns |
+|---|---|---|
+| `(select key)` | All cells that have key | set of coords |
+| `(select key property)` | Cells where key has a given property | set of coords |
+| `(select key property value)` | Cells where key's property equals value | set of coords |
+| `(select-all)` | Every cell on the grid | set of coords |
+| `(select-xy x y)` | A single cell | set of coords |
+| `(select-row y)` | All cells in row y | set of coords |
+| `(select-column x)` | All cells in column x | set of coords |
+| `(select-neighbors x y neighborhood)` | Cells surrounding (x, y) | set of coords |
+| `(select-neighbors x y neighborhood r)` | Cells within radius r of (x, y) | set of coords |
+| `(select-at deltas x y)` | Cells at specific offsets from (x, y) | set of coords |
+
+Neighborhoods: `'moore`, `'von-neumann`, `'horizontal`, `'vertical`. Default radius `r` = 1.
+
+### Selector Modifiers
+
+| Signature | Description | Returns |
+|---|---|---|
+| `(offset coords dx dy)` | Shift all coords by (dx, dy) | set of coords |
+| `(union s1 s2 ...)` | Coords in any of the sets | set of coords |
+| `(intersection s1 s2 ...)` | Coords in all of the sets | set of coords |
+| `(difference s1 s2 ...)` | Coords in s1 but not in s2 | set of coords |
+| `(one coords)` | Any single coord from the set | set of coords (0 or 1 element) |
+| `(nearest x y coords)` | Closest coord to (x, y) | set of coords (0 or 1 element) |
+
+### Spatial Queries
+
+| Signature | Description | Returns |
+|---|---|---|
+| `(exists-at? coords x y)` | Check if (x, y) is in the selector | bool |
+| `(bounds-of coords)` | Bounding box of the selector | (x-min x-max y-min y-max) \| #f |
+
+### Movement
+
+| Signature | Description | Returns |
+|---|---|---|
+| `(move-by! key dx dy)` | Move all cells with key by (dx, dy) | void |
+| `(move-by! key coords dx dy)` | Move selected cells with key by (dx, dy) | void |
+| `(move-to! key tx ty)` | Move all cells with key to (tx, ty) | void |
+| `(move-to! key coords tx ty)` | Move selected cells with key to (tx, ty) | void |
+| `(copy-by! key dx dy)` | Copy all cells with key by (dx, dy), keep originals | void |
+| `(copy-by! key coords dx dy)` | Copy selected cells with key by (dx, dy), keep originals | void |
+| `(copy-to! key tx ty)` | Copy all cells with key to (tx, ty), keep originals | void |
+| `(copy-to! key coords tx ty)` | Copy selected cells with key to (tx, ty), keep originals | void |
+
+
+### Color
+
+| Signature | Description | Returns |
+|---|---|---|
+| `(color r g b)` | RGB color, fully opaque; each channel 0.0–1.0 | color vector |
+| `(color r g b a)` | RGBA color with alpha | color vector |
+| `(with-opacity color opacity)` | Return color with alpha replaced | color vector |
+
+---
+
+## Usage Examples
+
+### Storing Data on Cells
+
+Each cell can hold any number of named **keys**. A key can store a boolean presence marker, a scalar value, or a dictionary of named properties.
+
+**Presence** — mark a cell as having a feature:
+
+```racket
+(set-cell! x y 'wall)
+(get-cell  x y 'wall)      ; → #t | #f
+(delete-cell! x y 'wall)
 ```
-(set-cell! x y 'wall)              ; mark
-(get-cell  x y 'wall)              ; → #t | #f
-(delete-cell! x y 'wall)           ; unmark
+
+**Scalar** — store a single value under a key:
+
+```racket
+(set-cell! x y 'trail 0.8)
+(get-cell  x y 'trail)     ; → value | #f
+(delete-cell! x y 'trail)
 ```
 
-### Scalar
+**Dictionary** — store a named collection of properties under a key. Multiple `set-cell!` calls accumulate:
 
-Store a single named value on a cell.
-
-```
-(set-cell! x y 'state 'alive)      ; write
-(get-cell  x y 'state)             ; → value | #f
-(delete-cell! x y 'state)          ; remove
-```
-
-### Dictionary
-
-Store a named collection of properties on a cell.
-
-```
-(set-cell! x y 'ball 'dx  1)       ; write property
-(set-cell! x y 'ball 'dy -1)       ; write another property
-(get-cell  x y 'ball)              ; → dictionary | #f
-(get dict 'dx)                     ; read property      → value | #f
-(or (get dict 'dx) 0)              ; read with default
+```racket
+(set-cell! x y 'ball 'dx  1)
+(set-cell! x y 'ball 'dy -1)
+(define b (get-cell x y 'ball))    ; → dictionary | #f
+(get b 'dx)                        ; → value | #f
+(or (get b 'dx) 0)                 ; → value | default
 (delete-cell! x y 'ball 'dx)       ; remove one property
 (delete-cell! x y 'ball)           ; remove whole dictionary
 ```
 
-A cell can hold multiple keys at once:
+A cell can hold multiple keys simultaneously:
 
-```
-(set-cell! x y 'wall)              ; presence
-(set-cell! x y 'ball 'dx 1)        ; dictionary on the same cell
-```
-
----
-
-## Multi-Cell Queries
-
-Find cells by key across the whole grid.
-
-```
-(get-any-cell 'ball)               ; → (x y value) | #f
-(get-all-cells 'wall)              ; → ((x y value) ...)
-```
-
-The value in the result is whatever was stored — `#t`, a scalar, or a dictionary.
-Use `define-list` to unpack the result:
-
-```
-(define cell (get-any-cell 'ball))
-(when cell
-  (define-list (x y ball) cell)
-  (define dx (get ball 'dx)))
+```racket
+(set-cell! x y 'wall)
+(set-cell! x y 'ball 'dx 1)        ; same cell holds both
 ```
 
 ---
 
-## Movement & Collision
+### Coordinate Selectors
 
-Move all cells with a given key by an offset:
+A **selector** is a set of `(x y)` coordinate pairs. Selector functions describe *which cells* to work with; they don't read or write cell data.
 
-```
-(move-cells! 'paddle 1 0)          ; move right by 1
-```
+**Select by key** — all cells that have a given key:
 
-Check if two groups of cells currently overlap:
-
-```
-(collides? 'ball 'wall)            ; → #t | #f
-```
-
-Check if moving a group would cause a collision, without actually moving:
-
-```
-(collides-at? 'paddle 1 0 'wall)   ; → #t | #f
+```racket
+(select 'wall)                         ; all wall cells
+(select 'ball 'dx)                     ; ball cells that have a 'dx property
+(select 'ball 'dx 1)                   ; ball cells where dx = 1
+(select 'ball 'dx '(-1 1))             ; ball cells where dx is -1 or 1
 ```
 
-Get the bounding box of all cells with a key:
+**Select by position** — geometric queries:
 
-```
-(bounds 'paddle)                   ; → (x-min x-max y-min y-max) | #f
-```
-
----
-
-## Global Data
-
-Store values that belong to the program, not to any cell.
-
-```
-(set-grid! 'score 0)               ; write
-(get-grid  'score)                 ; → value | #f
-(or (get-grid 'score) 0)           ; → value | default
-(delete-grid! 'score)              ; remove
+```racket
+(select-all)                           ; every cell on the grid
+(select-xy 5 3)                        ; a single cell
+(select-row 0)                         ; entire top row
+(select-column 0)                      ; entire left column
+(select-neighbors 5 5 'moore)          ; 8 surrounding cells
+(select-neighbors 5 5 'von-neumann)    ; 4 orthogonal cells
+(select-neighbors 5 5 'horizontal 2)   ; 2 cells left and right
+(select-neighbors 5 5 'vertical 2)     ; 2 cells above and below
 ```
 
 ---
 
-## Grid-Wide Operations
+### Selector Modifiers
 
+**Selector modifiers** take one or more selectors and return a new selector. They let you build precise selections through composition.
+
+**Set algebra** — combine or filter coordinate sets:
+
+```racket
+(union s1 s2)                          ; all coords in either
+(intersection s1 s2)                   ; coords in both
+(difference s1 s2)                     ; coords in s1 but not s2
 ```
-(delete-all! 'wall)                ; remove all cells with key
-(clear!)                           ; reset entire grid
-(clear! '(ball paddle))            ; reset only listed keys
+
+**Spatial** — shift or reduce:
+
+```racket
+(offset coords dx dy)                  ; shift all coords by (dx, dy)
+(one coords)                           ; any single coord from the set
+(nearest x y coords)                   ; closest coord to (x, y)
+```
+
+**Example — collision preview**: check if moving the paddle right would hit a wall, without actually moving:
+
+```racket
+(set-empty? (intersection (offset (select 'paddle) 1 0) (select 'wall)))
 ```
 
 ---
 
-# Reference
+### Iterating with `with`
 
-## Cell Read / Write
+`with` loops over a selector, executing the body once per coordinate with `x` and `y` bound:
 
-`(set-cell! x y key)`                           → void
+```racket
+(with (select 'wall) as (x y)
+  (set-cell! x y 'wall 'dx 1))
+```
 
-`(set-cell! x y key value)`                     → void
+When a selector contains exactly one cell (e.g. a single ball), `with` is used to unpack its position:
 
-`(set-cell! x y key property value)`            → void
+```racket
+(with (select 'ball) as (ball-x ball-y)
+  (define ball (get-cell ball-x ball-y 'ball))
+  (define dx (get ball 'dx))
+  ...)
+```
 
-`(get-cell x y)`                                → hash
+`select-xy` always produces a single-cell selector and is useful for naming a computed position:
 
-`(get-cell x y key)`                            → dictionary | value | #t | #f
+```racket
+(with (select-xy (+ ball-x dx) (+ ball-y dy)) as (new-x new-y)
+  ...)
+```
 
-`(get dictionary property)`                      → value | #f
+---
 
-`(delete-cell! x y key)`                        → void
+### Spatial Queries
 
-`(delete-cell! x y key property)`               → void
+`exists-at?` checks whether a specific coordinate is in a selector:
 
-## Multi-Cell Queries
+```racket
+(exists-at? (select 'wall) new-x new-y)    ; → #t | #f
+```
 
-`(get-any-cell key)`                            → (x y value) | #f
+`bounds-of` returns the bounding box of a selector:
 
-`(get-all-cells key)`                           → ((x y value) ...)
+```racket
+(bounds-of (select 'paddle))    ; → (x-min x-max y-min y-max) | #f
+```
 
-## Movement & Collision
+---
 
-`(move-cells! key dx dy)`                       → void
+### Moving Entities
 
-`(bounds key)`                                  → (x-min x-max y-min y-max) | #f
+Movement functions transfer the data stored under a key from one set of cells to another. Only the specified key is affected; other keys at the same cell are untouched.
 
-`(collides? key1 key2)`                         → bool
+**Move by offset** — shift all cells with a key:
 
-`(collides-at? key dx dy other-key)`            → bool
+```racket
+(move-by! 'paddle dx 0)                          ; short form — all paddle cells
+(move-by! 'paddle (select 'paddle) dx 0)         ; long form — explicit selector
+```
 
-## Global Data
+**Move to position** — teleport to an absolute coordinate:
 
-`(set-grid! key value)`                         → void
+```racket
+(move-to! 'ball new-x new-y)                     ; short form — all ball cells
+(move-to! 'ball (select 'ball) new-x new-y)      ; long form
+```
 
-`(get-grid key)`                                 → value | #f
+Note: `move-to!` places all selected cells at the same destination. It makes sense when the selector has exactly one cell (a single entity). For multi-cell shapes, use `move-by!`.
 
-`(delete-grid! key)`                            → void
+Both functions use a **two-pass** approach (snapshot all source values, then write) to avoid aliasing bugs when source and destination overlap.
 
-## Grid-Wide Operations
+---
 
-`(delete-all! key)`                             → void
+### Copying
 
-`(clear!)`                                      → void
+`copy-by!` and `copy-to!` work like their `move-*` counterparts but leave the original cells intact:
 
-`(clear! keys)`                                 → void
+```racket
+(copy-by! 'trail dx dy)               ; copy all trail cells by offset
+(copy-to! 'ball bx by)                ; copy ball to position, keep original
+```
 
+---
 
-# Framework Internal Functions
+### Global Data
 
-## Initialization
+Store values that belong to the program rather than any particular cell:
 
-`(init! size)`                                  → void
+```racket
+(set-grid! 'score 0)
+(get-grid  'score)             ; → value | #f
+(or (get-grid 'score) 0)       ; → value | default
+(delete-grid! 'score)
+```
 
+---
 
-# Grid Internal Functions
+### Clearing the Grid
 
-(not exported)
+```racket
+(clear!)                       ; reset all cell data and all global data
+(clear-cells!)                 ; reset all cell data, keep global data
+(clear-cells! 'ball)           ; remove only the 'ball key from all cells
+(clear-cells! '(ball paddle))  ; remove multiple keys from all cells
+(clear-grid!)                  ; reset all global data, keep cells
+(delete-grid! 'score)          ; remove one global key
+```
 
-## Helpers
+---
 
-`(get-coords key)`                              → ((x y) ...)
+### Colors
 
-`(all-coordinates)`                             → ((x y) ...)
+```racket
+(color r g b)             ; RGB, each 0.0–1.0, fully opaque
+(color r g b a)           ; RGBA with alpha
+(with-opacity c opacity)  ; return copy of color c with new alpha
+```
+
