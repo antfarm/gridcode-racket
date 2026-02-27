@@ -158,23 +158,6 @@
            (check-true  (get-cell 5 5 'key1))
            (check-false (get-grid 'key1)))
 
-(test-case "clear-grid! with single key — removes only that key"
-           (init! 10)
-           (set-grid! 'key1 1)
-           (set-grid! 'key2 2)
-           (clear-grid! 'key1)
-           (check-false   (get-grid 'key1))
-           (check-equal?  (get-grid 'key2) 2))
-
-(test-case "clear-grid! with key list — removes only listed keys"
-           (init! 10)
-           (set-grid! 'key1 1)
-           (set-grid! 'key2 2)
-           (set-grid! 'key3 3)
-           (clear-grid! '(key1 key2))
-           (check-false  (get-grid 'key1))
-           (check-false  (get-grid 'key2))
-           (check-equal? (get-grid 'key3) 3))
 
 ;; copy-by!
 

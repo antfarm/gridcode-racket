@@ -178,13 +178,8 @@
        (for ([coord (all-coordinates)])
          (delete-cell! (first coord) (second coord) k)))]))
 
-(define clear-grid!
-  (case-lambda
-    [()
-     (hash-set! grid 'data (make-hash))]
-    [(key-or-keys)
-     (for ([k (normalize-keys key-or-keys)])
-       (delete-grid! k))]))
+(define (clear-grid!)
+  (hash-set! grid 'data (make-hash)))
 
 (define (clear!)
   (clear-cells!)
