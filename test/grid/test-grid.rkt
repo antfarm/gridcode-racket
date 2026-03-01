@@ -164,21 +164,21 @@
 (test-case "copy-by! — copies a cell without removing the original"
            (init! 10)
            (set-cell! 2 2 'foo)
-           (copy-by! 'foo (select 'foo) 1 0)
+           (copy-by! (select 'foo) 'foo 1 0)
            (check-true (get-cell 2 2 'foo))
            (check-true (get-cell 3 2 'foo)))
 
 (test-case "copy-by! — preserves scalar value"
            (init! 10)
            (set-cell! 2 2 'foo 42)
-           (copy-by! 'foo (select 'foo) 0 1)
+           (copy-by! (select 'foo) 'foo 0 1)
            (check-equal? (get-cell 2 3 'foo) 42))
 
 (test-case "copy-by! — preserves dictionary data"
            (init! 10)
            (set-cell! 2 2 'ball 'dx 1)
            (set-cell! 2 2 'ball 'dy -1)
-           (copy-by! 'ball (select 'ball) 1 1)
+           (copy-by! (select 'ball) 'ball 1 1)
            (check-equal? (get (get-cell 3 3 'ball) 'dx) 1)
            (check-equal? (get (get-cell 3 3 'ball) 'dy) -1))
 
@@ -186,82 +186,65 @@
            (init! 10)
            (set-cell! 2 2 'foo)
            (set-cell! 2 2 'bar)
-           (copy-by! 'foo (select 'foo) 1 0)
+           (copy-by! (select 'foo) 'foo 1 0)
            (check-true  (get-cell 2 2 'foo))
            (check-true  (get-cell 2 2 'bar))
            (check-true  (get-cell 3 2 'foo))
            (check-false (get-cell 3 2 'bar)))
 
-(test-case "copy-by! — short form copies all cells with key"
-           (init! 10)
-           (set-cell! 1 1 'foo)
-           (set-cell! 2 2 'foo)
-           (copy-by! 'foo 1 0)
-           (check-true (get-cell 1 1 'foo))
-           (check-true (get-cell 2 2 'foo))
-           (check-true (get-cell 2 1 'foo))
-           (check-true (get-cell 3 2 'foo)))
-
 (test-case "copy-by! — does nothing for empty selector"
            (init! 10)
-           (check-not-exn (lambda () (copy-by! 'foo (select 'foo) 1 0))))
+           (check-not-exn (lambda () (copy-by! (select 'foo) 'foo 1 0))))
 
 ;; copy-to!
 
 (test-case "copy-to! — copies a cell without removing the original"
            (init! 10)
            (set-cell! 1 1 'foo)
-           (copy-to! 'foo (select 'foo) 7 8)
+           (copy-to! (select 'foo) 'foo 7 8)
            (check-true (get-cell 1 1 'foo))
            (check-true (get-cell 7 8 'foo)))
 
 (test-case "copy-to! — preserves scalar value"
            (init! 10)
            (set-cell! 1 1 'foo 99)
-           (copy-to! 'foo (select 'foo) 5 5)
+           (copy-to! (select 'foo) 'foo 5 5)
            (check-equal? (get-cell 5 5 'foo) 99))
 
 (test-case "copy-to! — only copies specified key, leaves others"
            (init! 10)
            (set-cell! 1 1 'foo)
            (set-cell! 1 1 'bar)
-           (copy-to! 'foo (select 'foo) 7 8)
+           (copy-to! (select 'foo) 'foo 7 8)
            (check-true  (get-cell 1 1 'foo))
            (check-true  (get-cell 1 1 'bar))
            (check-true  (get-cell 7 8 'foo))
            (check-false (get-cell 7 8 'bar)))
 
-(test-case "copy-to! — short form copies all cells with key"
-           (init! 10)
-           (set-cell! 1 1 'foo)
-           (copy-to! 'foo 7 8)
-           (check-true (get-cell 1 1 'foo))
-           (check-true (get-cell 7 8 'foo)))
-
 (test-case "copy-to! — does nothing for empty selector"
            (init! 10)
-           (check-not-exn (lambda () (copy-to! 'foo (select 'foo) 5 5))))
+           (check-not-exn (lambda () (copy-to! (select 'foo) 'foo 5 5))))
 
 ;; move-by!
 
 (test-case "move-by! — moves a single cell by dx dy"
            (init! 10)
            (set-cell! 2 2 'foo)
-           (move-by! 'foo (select 'foo) 1 0)
+           (move-by! (select 'foo) 'foo 1 0)
            (check-false (get-cell 2 2 'foo))
            (check-true  (get-cell 3 2 'foo)))
 
 (test-case "move-by! — preserves scalar value"
            (init! 10)
            (set-cell! 2 2 'foo 42)
-           (move-by! 'foo (select 'foo) 0 1)
+           (move-by! (select 'foo) 'foo 0 1)
            (check-equal? (get-cell 2 3 'foo) 42))
 
 (test-case "move-by! — preserves dictionary data"
            (init! 10)
            (set-cell! 2 2 'ball 'dx 1)
            (set-cell! 2 2 'ball 'dy -1)
-           (move-by! 'ball (select 'ball) 1 1)
+           (move-by! (select 'ball) 'ball 1 1)
            (check-equal? (get (get-cell 3 3 'ball) 'dx) 1)
            (check-equal? (get (get-cell 3 3 'ball) 'dy) -1))
 
@@ -269,7 +252,7 @@
            (init! 10)
            (set-cell! 1 1 'foo)
            (set-cell! 2 2 'foo)
-           (move-by! 'foo (select 'foo) 1 0)
+           (move-by! (select 'foo) 'foo 1 0)
            (check-false (get-cell 1 1 'foo))
            (check-false (get-cell 2 2 'foo))
            (check-true  (get-cell 2 1 'foo))
@@ -279,7 +262,7 @@
            (init! 10)
            (set-cell! 2 2 'foo)
            (set-cell! 2 2 'bar)
-           (move-by! 'foo (select 'foo) 1 0)
+           (move-by! (select 'foo) 'foo 1 0)
            (check-false (get-cell 2 2 'foo))
            (check-true  (get-cell 2 2 'bar))
            (check-true  (get-cell 3 2 'foo))
@@ -287,38 +270,28 @@
 
 (test-case "move-by! — does nothing for empty selector"
            (init! 10)
-           (check-not-exn (lambda () (move-by! 'foo (select 'foo) 1 0))))
-
-(test-case "move-by! — short form moves all cells with key"
-           (init! 10)
-           (set-cell! 1 1 'foo)
-           (set-cell! 2 2 'foo)
-           (move-by! 'foo 1 0)
-           (check-false (get-cell 1 1 'foo))
-           (check-false (get-cell 2 2 'foo))
-           (check-true  (get-cell 2 1 'foo))
-           (check-true  (get-cell 3 2 'foo)))
+           (check-not-exn (lambda () (move-by! (select 'foo) 'foo 1 0))))
 
 ;; move-to!
 
 (test-case "move-to! — moves a single cell to absolute position"
            (init! 10)
            (set-cell! 1 1 'foo)
-           (move-to! 'foo (select 'foo) 7 8)
+           (move-to! (select 'foo) 'foo 7 8)
            (check-false (get-cell 1 1 'foo))
            (check-true  (get-cell 7 8 'foo)))
 
 (test-case "move-to! — preserves scalar value"
            (init! 10)
            (set-cell! 1 1 'foo 99)
-           (move-to! 'foo (select 'foo) 5 5)
+           (move-to! (select 'foo) 'foo 5 5)
            (check-equal? (get-cell 5 5 'foo) 99))
 
 (test-case "move-to! — only moves specified key, leaves others"
            (init! 10)
            (set-cell! 1 1 'foo)
            (set-cell! 1 1 'bar)
-           (move-to! 'foo (select 'foo) 7 8)
+           (move-to! (select 'foo) 'foo 7 8)
            (check-false (get-cell 1 1 'foo))
            (check-true  (get-cell 1 1 'bar))
            (check-true  (get-cell 7 8 'foo))
@@ -326,14 +299,7 @@
 
 (test-case "move-to! — does nothing for empty selector"
            (init! 10)
-           (check-not-exn (lambda () (move-to! 'foo (select 'foo) 5 5))))
-
-(test-case "move-to! — short form moves all cells with key"
-           (init! 10)
-           (set-cell! 1 1 'foo)
-           (move-to! 'foo 7 8)
-           (check-false (get-cell 1 1 'foo))
-           (check-true  (get-cell 7 8 'foo)))
+           (check-not-exn (lambda () (move-to! (select 'foo) 'foo 5 5))))
 
 ;; exists-at?
 

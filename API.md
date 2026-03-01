@@ -75,14 +75,10 @@ Neighborhoods: `'moore`, `'von-neumann`, `'horizontal`, `'vertical`. Default rad
 
 | Signature | Description | Returns |
 |---|---|---|
-| `(move-by! key dx dy)` | Move all cells with key by (dx, dy) | void |
-| `(move-by! key coords dx dy)` | Move selected cells with key by (dx, dy) | void |
-| `(move-to! key tx ty)` | Move all cells with key to (tx, ty) | void |
-| `(move-to! key coords tx ty)` | Move selected cells with key to (tx, ty) | void |
-| `(copy-by! key dx dy)` | Copy all cells with key by (dx, dy), keep originals | void |
-| `(copy-by! key coords dx dy)` | Copy selected cells with key by (dx, dy), keep originals | void |
-| `(copy-to! key tx ty)` | Copy all cells with key to (tx, ty), keep originals | void |
-| `(copy-to! key coords tx ty)` | Copy selected cells with key to (tx, ty), keep originals | void |
+| `(move-by! coords key dx dy)` | Move key's data from coords by (dx, dy) | void |
+| `(move-to! coords key tx ty)` | Move key's data from coords to (tx, ty) | void |
+| `(copy-by! coords key dx dy)` | Copy key's data from coords by (dx, dy), keep originals | void |
+| `(copy-to! coords key tx ty)` | Copy key's data from coords to (tx, ty), keep originals | void |
 
 
 ### Color
@@ -239,20 +235,18 @@ When a selector contains exactly one cell (e.g. a single ball), `with` is used t
 
 ### Moving Entities
 
-Movement functions transfer the data stored under a key from one set of cells to another. Only the specified key is affected; other keys at the same cell are untouched.
+Movement functions transfer the data stored under a key from a selector to a destination. Only the specified key is affected; other keys at the same cell are untouched.
 
-**Move by offset** — shift all cells with a key:
+**Move by offset** — shift selected cells by (dx, dy):
 
 ```racket
-(move-by! 'paddle dx 0)                          ; short form — all paddle cells
-(move-by! 'paddle (select 'paddle) dx 0)         ; long form — explicit selector
+(move-by! (select 'paddle) 'paddle dx 0)
 ```
 
-**Move to position** — teleport to an absolute coordinate:
+**Move to position** — teleport selected cells to an absolute coordinate:
 
 ```racket
-(move-to! 'ball new-x new-y)                     ; short form — all ball cells
-(move-to! 'ball (select 'ball) new-x new-y)      ; long form
+(move-to! (select 'ball) 'ball new-x new-y)
 ```
 
 Note: `move-to!` places all selected cells at the same destination. It makes sense when the selector has exactly one cell (a single entity). For multi-cell shapes, use `move-by!`.
@@ -266,8 +260,8 @@ Both functions use a **two-pass** approach (snapshot all source values, then wri
 `copy-by!` and `copy-to!` work like their `move-*` counterparts but leave the original cells intact:
 
 ```racket
-(copy-by! 'trail dx dy)               ; copy all trail cells by offset
-(copy-to! 'ball bx by)                ; copy ball to position, keep original
+(copy-by! (select 'trail) 'trail dx dy)
+(copy-to! (select 'ball)  'ball  bx by)
 ```
 
 ---

@@ -24,7 +24,6 @@
                 (select-neighbors center (- rows 1) 'horizontal 2)) as (x y)
                                                                     (set-cell! x y 'paddle))
 
-
    (with (select-xy (+ (- center 2) (random 5)) (- rows 2)) as (ball-x ball-y)
          (set-cell! ball-x ball-y 'ball 'dx (list-ref '(-1 1) (random 2)))
          (set-cell! ball-x ball-y 'ball 'dy -1)))
@@ -42,14 +41,14 @@
                   (define new-dx (or (get wall 'dx) dx))
                   (define new-dy (or (get wall 'dy) dy))
                   (with (select-xy (+ ball-x new-dx) (+ ball-y new-dy)) as (bx by)
-                        (move-to! 'ball bx by)
+                        (move-to! (select 'ball) 'ball bx by)
                         (set-cell! bx by 'ball 'dx new-dx)
                         (set-cell! bx by 'ball 'dy new-dy)))
 
                  ((exists-at? (select 'paddle) ball-x new-y)
                   (define new-dx (list-ref '(-1 1) (random 2)))
                   (with (select-xy (+ ball-x new-dx) (- ball-y 1)) as (bx by)
-                        (move-to! 'ball bx by)
+                        (move-to! (select 'ball) 'ball bx by)
                         (set-cell! bx by 'ball 'dx new-dx)
                         (set-cell! bx by 'ball 'dy -1)))
 
@@ -58,7 +57,7 @@
                   (set-cell! ball-x new-y 'ball-out))
 
                  (else
-                  (move-to! 'ball new-x new-y))))))
+                  (move-to! (select 'ball) 'ball new-x new-y))))))
 
  (define (color-for-cell x y)
    (cond
@@ -84,4 +83,4 @@
  (define (move-paddle dir)
    (define dx (if (eq? dir 'left) -1 1))
    (when (set-empty? (intersection (offset (select 'paddle) dx 0) (select 'wall)))
-     (move-by! 'paddle dx 0))))
+     (move-by! (select 'paddle) 'paddle dx 0))))
