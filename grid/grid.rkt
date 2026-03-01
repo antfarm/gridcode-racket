@@ -131,14 +131,32 @@
 
 ;; Grid (global) data
 
-(define (set-grid! key value)
-  (hash-set! (hash-ref grid 'data) key value))
+(define set-grid!
+  (case-lambda
+    [(key)
+     (hash-set! (hash-ref grid 'data) key #t)]
+    [(key value)
+     (hash-set! (hash-ref grid 'data) key value)]
+    [(key property value)
+     (let* ([data (hash-ref grid 'data)]
+            [dict (hash-ref data key #f)]
+            [new-dict (if (dictionary? dict)
+                          (dictionary-set dict property value)
+                          (dictionary property value))])
+       (hash-set! data key new-dict))]))
 
 (define (get-grid key)
   (hash-ref (hash-ref grid 'data) key #f))
 
-(define (delete-grid! key)
-  (hash-remove! (hash-ref grid 'data) key))
+(define delete-grid!
+  (case-lambda
+    [(key)
+     (hash-remove! (hash-ref grid 'data) key)]
+    [(key property)
+     (let* ([data (hash-ref grid 'data)]
+            [dict (hash-ref data key #f)])
+       (when (dictionary? dict)
+         (hash-set! data key (dictionary-remove dict property))))]))
 
 ;; Grid-wide operations
 

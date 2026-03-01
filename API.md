@@ -8,6 +8,8 @@ For code examples that illustrate how to use the API see [Usage Examples](#usage
 
 ### Cell Data
 
+Each cell can store data under different keys and can be addressed by its (x y) coordinates. For each key, a cell can store either a scalar value (boolean, number or string) or a dictionary, i.e. a symbol table that makes scalar values accessible via a key.
+
 | Signature | Description | Returns |
 |---|---|---|
 | `(set-cell! x y key)` | Mark cell as having key (presence) | void |
@@ -15,23 +17,37 @@ For code examples that illustrate how to use the API see [Usage Examples](#usage
 | `(set-cell! x y key property value)` | Set a property on key's dictionary | void |
 | `(get-cell x y)` | All keys on a cell | hash |
 | `(get-cell x y key)` | Value stored under key | dictionary \| value \| #t \| #f |
-| `(get dictionary property)` | Read a property from a dictionary | value \| #f |
 | `(delete-cell! x y key)` | Remove key from cell | void |
 | `(delete-cell! x y key property)` | Remove one property from key's dictionary | void |
 | `(clear-cells!)` | Reset all cell data | void |
 
 ### Global Data
 
+The grid itself can store data in the same fashion as a cell, this is useful for storing global data.
+
 | Signature | Description | Returns |
 |---|---|---|
-| `(set-grid! key value)` | Store a program-level value | void |
-| `(get-grid key)` | Read a program-level value | value \| #f |
-| `(delete-grid! key)` | Remove a program-level value | void |
+| `(set-grid! key)` | Mark key as present (flag) | void |
+| `(set-grid! key value)` | Store a scalar value under key | void |
+| `(set-grid! key property value)` | Set a property on key's dictionary | void |
+| `(get-grid key)` | Value stored under key | dictionary \| value \| #f |
+| `(delete-grid! key)` | Remove key | void |
+| `(delete-grid! key property)` | Remove one property from key's dictionary | void |
 | `(clear-grid!)` | Reset all global data | void |
+
+### Dictionary Access
+
+Values can be retrieved from a dictionary with the `get` function.
+
+| Signature | Description | Returns |
+|---|---|---|
+| `(get dictionary property)` | Read a property from a dictionary | value \| #f |
 
 ### Selecting Cells
 
 #### Coordinate Selectors
+
+Selectors return a set of (x y) coordinate pairs. They describe which cells to work with, and can be passed to with for iteration or to any operation in the next section. 
 
 | Signature | Description | Returns |
 |---|---|---|
@@ -49,6 +65,8 @@ For code examples that illustrate how to use the API see [Usage Examples](#usage
 Neighborhoods: `'moore`, `'von-neumann`, `'horizontal`, `'vertical`. Default radius `r` = 1.
 
 #### Selector Modifiers
+
+Modifiers take one or more selectors and return a new selector, letting you combine, shift, or narrow coordinate sets through composition.
 
 | Signature | Description | Returns |
 |---|---|---|
@@ -70,6 +88,8 @@ Neighborhoods: `'moore`, `'von-neumann`, `'horizontal`, `'vertical`. Default rad
 
 #### Movement
 
+Multiple cells are moved or copied simultaneously, so overlapping source and destination positions are handled correctly.
+
 | Signature | Description | Returns |
 |---|---|---|
 | `(move-by! coords key dx dy)` | Move key's data from coords by (dx, dy) | void |
@@ -79,6 +99,8 @@ Neighborhoods: `'moore`, `'von-neumann`, `'horizontal`, `'vertical`. Default rad
 | `(delete-cells! coords key)` | Remove key from all cells in selector | void |
 
 ### Color
+
+Colors are RGBA values with each channel in the range 0.0–1.0. Alpha is optional and defaults to fully opaque.
 
 | Signature | Description | Returns |
 |---|---|---|

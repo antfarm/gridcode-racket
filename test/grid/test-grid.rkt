@@ -98,6 +98,11 @@
 
 ;; Grid (global) data
 
+(test-case "set-grid!/get-grid — presence (1 arg)"
+           (init! 10)
+           (set-grid! 'key1)
+           (check-true (get-grid 'key1)))
+
 (test-case "set-grid!/get-grid — set and retrieve value"
            (init! 10)
            (set-grid! 'key1 42)
@@ -113,6 +118,27 @@
            (set-grid! 'key1 42)
            (delete-grid! 'key1)
            (check-false (get-grid 'key1)))
+
+(test-case "set-grid!/get-grid — dictionary (3 args)"
+           (init! 10)
+           (set-grid! 'player 'score 100)
+           (check-equal? (get (get-grid 'player) 'score) 100))
+
+(test-case "set-grid! — multiple properties accumulate in dictionary"
+           (init! 10)
+           (set-grid! 'player 'score 100)
+           (set-grid! 'player 'lives 3)
+           (define d (get-grid 'player))
+           (check-equal? (get d 'score) 100)
+           (check-equal? (get d 'lives) 3))
+
+(test-case "delete-grid! — removes one property from dictionary"
+           (init! 10)
+           (set-grid! 'player 'score 100)
+           (set-grid! 'player 'lives 3)
+           (delete-grid! 'player 'score)
+           (check-false (get (get-grid 'player) 'score))
+           (check-equal? (get (get-grid 'player) 'lives) 3))
 
 ;; Grid-wide operations
 
