@@ -77,7 +77,7 @@
    (cond
      ((eq? key 'left)   (move-paddle 'left))
      ((eq? key 'right)  (move-paddle 'right))
-     ((eq? key #\space) (clear!) (setup-grid))
+     ((eq? key #\space) (clear-cells!) (setup-grid))
      (else              (void))))
 
  (define (move-paddle dir)

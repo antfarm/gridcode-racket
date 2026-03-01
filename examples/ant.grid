@@ -40,10 +40,12 @@
  (define (handle-key-pressed key)
    (cond
      ((member key '(left right up down))
-      (begin
-        (update-ant key)
-        (set-grid! 'idle-ticks 0)))
-     ((eq? key #\space) (begin (clear!) (setup-grid)))
+      (update-ant key)
+      (set-grid! 'idle-ticks 0))
+     ((eq? key #\space)
+      (clear-cells!)
+      (clear-grid!)
+      (setup-grid))
      (else (void))))
 
  (define (update-ant direction)

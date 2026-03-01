@@ -116,13 +116,6 @@
 
 ;; Grid-wide operations
 
-(test-case "clear! — resets all cells and grid data"
-           (init! 10)
-           (set-cell! 5 5 'key1)
-           (set-grid! 'key1 1)
-           (clear!)
-           (check-false (get-cell 5 5 'key1))
-           (check-false (get-grid 'key1)))
 
 (test-case "clear-cells! — resets all cell data, leaves grid data"
            (init! 10)

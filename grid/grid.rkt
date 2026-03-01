@@ -11,7 +11,6 @@
          set-grid!
          get-grid
          delete-grid!
-         clear!
          clear-cells!
          clear-grid!
          copy-to!
@@ -156,6 +155,3 @@
 (define (clear-grid!)
   (hash-set! grid 'data (make-hash)))
 
-(define (clear!)
-  (clear-cells!)
-  (clear-grid!))
