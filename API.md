@@ -18,7 +18,7 @@ For code examples that illustrate how to use the API see [Usage Examples](#usage
 | `(get dictionary property)` | Read a property from a dictionary | value \| #f |
 | `(delete-cell! x y key)` | Remove key from cell | void |
 | `(delete-cell! x y key property)` | Remove one property from key's dictionary | void |
-| `(delete-cells! coords key)` | Remove key from all cells in selector | void |
+| `(clear-cells!)` | Reset all cell data | void |
 
 ### Global Data
 
@@ -27,16 +27,11 @@ For code examples that illustrate how to use the API see [Usage Examples](#usage
 | `(set-grid! key value)` | Store a program-level value | void |
 | `(get-grid key)` | Read a program-level value | value \| #f |
 | `(delete-grid! key)` | Remove a program-level value | void |
+| `(clear-grid!)` | Reset all global data | void |
 
-### Clear Operations
+### Selecting Cells
 
-| Signature | Description |
-|---|---|
-| `(clear!)` | Reset all cell data and global data |
-| `(clear-cells!)` | Reset all cell data, keep global data |
-| `(clear-grid!)` | Reset all global data, keep cell data |
-
-### Coordinate Selectors
+#### Coordinate Selectors
 
 | Signature | Description | Returns |
 |---|---|---|
@@ -53,7 +48,7 @@ For code examples that illustrate how to use the API see [Usage Examples](#usage
 
 Neighborhoods: `'moore`, `'von-neumann`, `'horizontal`, `'vertical`. Default radius `r` = 1.
 
-### Selector Modifiers
+#### Selector Modifiers
 
 | Signature | Description | Returns |
 |---|---|---|
@@ -64,14 +59,16 @@ Neighborhoods: `'moore`, `'von-neumann`, `'horizontal`, `'vertical`. Default rad
 | `(one coords)` | Any single coord from the set | set of coords (0 or 1 element) |
 | `(nearest x y coords)` | Closest coord to (x, y) | set of coords (0 or 1 element) |
 
-### Spatial Queries
+### Operations on Selected Cells
+
+#### Spatial Queries
 
 | Signature | Description | Returns |
 |---|---|---|
 | `(exists-at? coords x y)` | Check if (x, y) is in the selector | bool |
 | `(bounds-of coords)` | Bounding box of the selector | (x-min x-max y-min y-max) \| #f |
 
-### Movement
+#### Movement
 
 | Signature | Description | Returns |
 |---|---|---|
@@ -79,7 +76,7 @@ Neighborhoods: `'moore`, `'von-neumann`, `'horizontal`, `'vertical`. Default rad
 | `(move-to! coords key tx ty)` | Move key's data from coords to (tx, ty) | void |
 | `(copy-by! coords key dx dy)` | Copy key's data from coords by (dx, dy), keep originals | void |
 | `(copy-to! coords key tx ty)` | Copy key's data from coords to (tx, ty), keep originals | void |
-
+| `(delete-cells! coords key)` | Remove key from all cells in selector | void |
 
 ### Color
 
