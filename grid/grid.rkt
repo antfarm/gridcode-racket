@@ -7,6 +7,7 @@
          get-cell
          get
          delete-cell!
+         delete-cells!
          set-grid!
          get-grid
          delete-grid!
@@ -145,17 +146,12 @@
 (define (all-coordinates)
   (hash-ref grid 'coordinates))
 
-(define (normalize-keys key-or-keys)
-  (if (list? key-or-keys) key-or-keys (list key-or-keys)))
+(define (delete-cells! coords key)
+  (for ([coord (in-set coords)])
+    (delete-cell! (first coord) (second coord) key)))
 
-(define clear-cells!
-  (case-lambda
-    [()
-     (hash-set! grid 'cells (make-hash))]
-    [(key-or-keys)
-     (for ([k (normalize-keys key-or-keys)])
-       (for ([coord (all-coordinates)])
-         (delete-cell! (first coord) (second coord) k)))]))
+(define (clear-cells!)
+  (hash-set! grid 'cells (make-hash)))
 
 (define (clear-grid!)
   (hash-set! grid 'data (make-hash)))

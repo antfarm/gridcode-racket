@@ -132,24 +132,6 @@
            (check-false (get-cell 5 5 'key1))
            (check-equal? (get-grid 'key1) 1))
 
-(test-case "clear-cells! with single key — removes only that key"
-           (init! 10)
-           (set-cell! 5 5 'key1)
-           (set-cell! 5 5 'key2)
-           (clear-cells! 'key1)
-           (check-false (get-cell 5 5 'key1))
-           (check-true  (get-cell 5 5 'key2)))
-
-(test-case "clear-cells! with key list — removes only listed keys"
-           (init! 10)
-           (set-cell! 5 5 'key1)
-           (set-cell! 5 5 'key2)
-           (set-cell! 5 5 'key3)
-           (clear-cells! '(key1 key2))
-           (check-false (get-cell 5 5 'key1))
-           (check-false (get-cell 5 5 'key2))
-           (check-true  (get-cell 5 5 'key3)))
-
 (test-case "clear-grid! — resets all grid data, leaves cell data"
            (init! 10)
            (set-cell! 5 5 'key1)
@@ -158,6 +140,27 @@
            (check-true  (get-cell 5 5 'key1))
            (check-false (get-grid 'key1)))
 
+;; delete-cells!
+
+(test-case "delete-cells! — removes key from all selected cells"
+           (init! 10)
+           (set-cell! 1 1 'foo)
+           (set-cell! 2 2 'foo)
+           (delete-cells! (select 'foo) 'foo)
+           (check-false (get-cell 1 1 'foo))
+           (check-false (get-cell 2 2 'foo)))
+
+(test-case "delete-cells! — leaves other keys intact"
+           (init! 10)
+           (set-cell! 5 5 'foo)
+           (set-cell! 5 5 'bar)
+           (delete-cells! (select 'foo) 'foo)
+           (check-false (get-cell 5 5 'foo))
+           (check-true  (get-cell 5 5 'bar)))
+
+(test-case "delete-cells! — does nothing for empty selector"
+           (init! 10)
+           (check-not-exn (lambda () (delete-cells! (select 'foo) 'foo))))
 
 ;; copy-by!
 

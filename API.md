@@ -18,6 +18,7 @@ For code examples that illustrate how to use the API see [Usage Examples](#usage
 | `(get dictionary property)` | Read a property from a dictionary | value \| #f |
 | `(delete-cell! x y key)` | Remove key from cell | void |
 | `(delete-cell! x y key property)` | Remove one property from key's dictionary | void |
+| `(delete-cells! coords key)` | Remove key from all cells in selector | void |
 
 ### Global Data
 
@@ -33,7 +34,6 @@ For code examples that illustrate how to use the API see [Usage Examples](#usage
 |---|---|
 | `(clear!)` | Reset all cell data and global data |
 | `(clear-cells!)` | Reset all cell data, keep global data |
-| `(clear-cells! key-or-keys)` | Remove key(s) from every cell |
 | `(clear-grid!)` | Reset all global data, keep cell data |
 
 ### Coordinate Selectors
