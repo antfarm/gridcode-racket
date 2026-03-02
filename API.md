@@ -2,41 +2,65 @@
 
 For code examples that illustrate how to use the API see [Usage Examples](#usage-examples) on this page and have a look at the [example programs](/examples).
 
----
-
 ## Reference
 
 ### Cell Data
 
 Each cell can store data under different keys and can be addressed by its (x y) coordinates. For each key, a cell can store either a scalar value (boolean, number or string) or a dictionary, i.e. a symbol table that makes scalar values accessible via a key.
 
+#### Scalar Values
+
 | Signature | Description | Returns |
 |---|---|---|
-| `(set-cell! x y key)` | Mark cell as having key (presence) | void |
-| `(set-cell! x y key value)` | Store a scalar value under key | void |
-| `(set-cell! x y key property value)` | Set a property on key's dictionary | void |
+| `(set-cell! x y key [value])` | Store value under key; default `#t` marks presence | void |
 | `(get-cell x y key)` | Value stored under key | dictionary \| value \| #t \| #f |
-| `(get-cell x y key property)` | Read a property from key's dictionary | value \| #f |
 | `(delete-cell! x y key)` | Remove key from cell | void |
+
+#### Dictionary Data
+
+| Signature | Description | Returns |
+|---|---|---|
+| `(set-cell! x y key property value)` | Set a property on key's dictionary | void |
+| `(get-cell x y key property)` | Read a property from key's dictionary | value \| #f |
 | `(delete-cell! x y key property)` | Remove one property from key's dictionary | void |
-| `(clear-cells!)` | Reset all cell data | void |
+
+#### Miscellaneous
+
+| Signature | Description | Returns |
+|---|---|---|
 | `(cell-info x y)` | String representation of a cell | string |
 
 ### Global Data
 
 The grid itself can store data in the same fashion as a cell, this is useful for storing global data.
 
+#### Scalar Values
+
 | Signature | Description | Returns |
 |---|---|---|
-| `(set-grid! key)` | Mark key as present (flag) | void |
-| `(set-grid! key value)` | Store a scalar value under key | void |
-| `(set-grid! key property value)` | Set a property on key's dictionary | void |
+| `(set-grid! key [value])` | Store value under key; default `#t` marks presence | void |
 | `(get-grid key)` | Value stored under key | dictionary \| value \| #f |
-| `(get-grid key property)` | Read a property from key's dictionary | value \| #f |
 | `(delete-grid! key)` | Remove key | void |
+
+#### Dictionary Data
+
+| Signature | Description | Returns |
+|---|---|---|
+| `(set-grid! key property value)` | Set a property on key's dictionary | void |
+| `(get-grid key property)` | Read a property from key's dictionary | value \| #f |
 | `(delete-grid! key property)` | Remove one property from key's dictionary | void |
-| `(clear-grid!)` | Reset all global data | void |
+
+#### Miscellaneous
+
+| Signature | Description | Returns |
+|---|---|---|
 | `(grid-info)` | String representation of global data | string |
+
+### Reset
+
+| Signature | Description | Returns |
+|---|---|---|
+| `(clear!)` | Reset all cell data and global data | void |
 
 ### Dictionary Access
 
@@ -86,7 +110,7 @@ Modifiers take one or more selectors and return a new selector, letting you comb
 
 | Signature | Description | Returns |
 |---|---|---|
-| `(exists-at? coords x y)` | Check if (x, y) is in the selector | bool |
+| `(exists-at? coords x y)` | Check if (x, y) is in the selector's result set | bool |
 | `(bounds-of coords)` | Bounding box of the selector | (x-min x-max y-min y-max) \| #f |
 
 #### Movement
@@ -304,11 +328,7 @@ Store values that belong to the program rather than any particular cell:
 ### Clearing the Grid
 
 ```racket
-(clear!)                       ; reset all cell data and all global data
-(clear-cells!)                 ; reset all cell data, keep global data
-(clear-cells! 'ball)           ; remove only the 'ball key from all cells
-(clear-cells! '(ball paddle))  ; remove multiple keys from all cells
-(clear-grid!)                  ; reset all global data, keep cells
+(clear!)                       ; reset all cell data and global data
 (delete-grid! 'score)          ; remove one global key
 ```
 

@@ -44,8 +44,7 @@
       (update-ant key)
       (set-grid! 'idle-ticks 0))
      ((eq? key #\space)
-      (clear-cells!)
-      (clear-grid!)
+      (clear!)
       (setup-grid))
      (else (void))))
 

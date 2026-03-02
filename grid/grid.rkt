@@ -14,8 +14,7 @@
          get-grid
          grid-info
          delete-grid!
-         clear-cells!
-         clear-grid!
+         clear!
          copy-to!
          copy-by!
          move-by!
@@ -191,9 +190,7 @@
   (for ([coord (in-set coords)])
     (delete-cell! (first coord) (second coord) key)))
 
-(define (clear-cells!)
-  (hash-set! grid 'cells (make-hash)))
-
-(define (clear-grid!)
+(define (clear!)
+  (hash-set! grid 'cells (make-hash))
   (hash-set! grid 'data (make-hash)))
 
