@@ -24,6 +24,7 @@
 
  (define (color-for-cell x y)
    (cond
+     ;; use exists-at? + select
      ((get-cell x y 'ant) (color 1.0 0.8 0.2))
      ((get-cell x y 'trail) (begin
                               (define concentration (get-cell x y 'trail))
@@ -32,7 +33,7 @@
      (else (color 0.0 0.0 0.0))))
 
  (define (info-for-cell x y)
-   (format "(~a,~a) ~a" x y (get-cell x y)))
+   (cell-info x y))
 
  (define (handle-cell-tapped x y)
    (void))

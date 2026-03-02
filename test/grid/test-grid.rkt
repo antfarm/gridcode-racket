@@ -59,6 +59,21 @@
 (test-case "get — returns #f when passed #f"
            (check-false (get #f 'prop1)))
 
+(test-case "get-cell — 4-arg reads property from dictionary"
+           (init! 10)
+           (set-cell! 5 5 'key1 'prop1 99)
+           (check-equal? (get-cell 5 5 'key1 'prop1) 99))
+
+(test-case "get-cell — 4-arg returns #f for missing property"
+           (init! 10)
+           (set-cell! 5 5 'key1 'prop1 1)
+           (check-false (get-cell 5 5 'key1 'prop2)))
+
+(test-case "get-cell — 4-arg returns #f when key holds a scalar"
+           (init! 10)
+           (set-cell! 5 5 'key1 42)
+           (check-false (get-cell 5 5 'key1 'prop1)))
+
 (test-case "delete-cell! — removes key"
            (init! 10)
            (set-cell! 5 5 'key1)
@@ -89,7 +104,7 @@
            (init! 10)
            (set-cell! 5 5 'key1 'prop1 1)
            (delete-cell! 5 5 'key1 'prop1)
-           (check-true (hash-has-key? (get-cell 5 5) 'key1)))
+           (check-true (exists-at? (select 'key1) 5 5)))
 
 (test-case "delete-cell! — safe when property is absent"
            (init! 10)
@@ -139,6 +154,21 @@
            (delete-grid! 'player 'score)
            (check-false (get (get-grid 'player) 'score))
            (check-equal? (get (get-grid 'player) 'lives) 3))
+
+(test-case "get-grid — 2-arg reads property from dictionary"
+           (init! 10)
+           (set-grid! 'player 'score 100)
+           (check-equal? (get-grid 'player 'score) 100))
+
+(test-case "get-grid — 2-arg returns #f for missing property"
+           (init! 10)
+           (set-grid! 'player 'score 100)
+           (check-false (get-grid 'player 'lives)))
+
+(test-case "get-grid — 2-arg returns #f when key holds a scalar"
+           (init! 10)
+           (set-grid! 'key1 42)
+           (check-false (get-grid 'key1 'prop1)))
 
 ;; Grid-wide operations
 

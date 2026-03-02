@@ -5,11 +5,14 @@
 (provide init!
          set-cell!
          get-cell
+         cell-data
+         cell-info
          get
          delete-cell!
          delete-cells!
          set-grid!
          get-grid
+         grid-info
          delete-grid!
          clear-cells!
          clear-grid!
@@ -59,13 +62,21 @@
     (hash-set! cell key value)
     (hash-set! cells (list x y) cell)))
 
+(define (cell-data x y)
+  (hash-ref (hash-ref grid 'cells) (list x y) (make-hash)))
+
 (define get-cell
   (case-lambda
-    [(x y)
-     (hash-ref (hash-ref grid 'cells) (list x y) (make-hash))]
     [(x y key)
-     (let ([cell (hash-ref (hash-ref grid 'cells) (list x y) (make-hash))])
-       (hash-ref cell key #f))]))
+     (hash-ref (cell-data x y) key #f)]
+    [(x y key property)
+     (let ([dict (hash-ref (cell-data x y) key #f)])
+       (if (dictionary? dict)
+           (dictionary-ref dict property)
+           #f))]))
+
+(define (cell-info x y)
+  (format "(~a,~a) ~a" x y (cell-data x y)))
 
 (define (get dict property)
   (if (dictionary? dict)
@@ -145,8 +156,21 @@
                           (dictionary property value))])
        (hash-set! data key new-dict))]))
 
-(define (get-grid key)
-  (hash-ref (hash-ref grid 'data) key #f))
+(define (grid-data)
+  (hash-ref grid 'data))
+
+(define get-grid
+  (case-lambda
+    [(key)
+     (hash-ref (grid-data) key #f)]
+    [(key property)
+     (let ([dict (hash-ref (grid-data) key #f)])
+       (if (dictionary? dict)
+           (dictionary-ref dict property)
+           #f))]))
+
+(define (grid-info)
+  (format "~a" (grid-data)))
 
 (define delete-grid!
   (case-lambda

@@ -15,11 +15,12 @@ Each cell can store data under different keys and can be addressed by its (x y) 
 | `(set-cell! x y key)` | Mark cell as having key (presence) | void |
 | `(set-cell! x y key value)` | Store a scalar value under key | void |
 | `(set-cell! x y key property value)` | Set a property on key's dictionary | void |
-| `(get-cell x y)` | All keys on a cell | hash |
 | `(get-cell x y key)` | Value stored under key | dictionary \| value \| #t \| #f |
+| `(get-cell x y key property)` | Read a property from key's dictionary | value \| #f |
 | `(delete-cell! x y key)` | Remove key from cell | void |
 | `(delete-cell! x y key property)` | Remove one property from key's dictionary | void |
 | `(clear-cells!)` | Reset all cell data | void |
+| `(cell-info x y)` | String representation of a cell | string |
 
 ### Global Data
 
@@ -31,9 +32,11 @@ The grid itself can store data in the same fashion as a cell, this is useful for
 | `(set-grid! key value)` | Store a scalar value under key | void |
 | `(set-grid! key property value)` | Set a property on key's dictionary | void |
 | `(get-grid key)` | Value stored under key | dictionary \| value \| #f |
+| `(get-grid key property)` | Read a property from key's dictionary | value \| #f |
 | `(delete-grid! key)` | Remove key | void |
 | `(delete-grid! key property)` | Remove one property from key's dictionary | void |
 | `(clear-grid!)` | Reset all global data | void |
+| `(grid-info)` | String representation of global data | string |
 
 ### Dictionary Access
 

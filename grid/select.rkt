@@ -49,7 +49,7 @@
   (filter-map (lambda (coord)
                 (let* ([x (first coord)]
                        [y (second coord)]
-                       [cell (get-cell x y)])
+                       [cell (cell-data x y)])
                   (if (hash-has-key? cell key)
                       (list x y (hash-ref cell key))
                       #f)))
