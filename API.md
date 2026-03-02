@@ -1,24 +1,47 @@
-# GridCode API Reference Guide
+# GridCode Reference Guide
 
-For code examples that illustrate how to use the API see [Usage Examples](#usage-examples) on this page and have a look at the [example programs](/examples).
 
-## Reference
+## Overview
+
+**GridCode** is a grid-based programming environment ...
+
+See the [example programs](/examples) for working simulations, and [Usage Examples](#usage-examples) below for detailed API usage.
+
+### Writing a Program
+
+**GridCode** programs use the Racket dialect `#lang gridcode`. 
+
+The `program` macro takes a name as an argument and expects a set of definitions of values and functions in its body:
+
+| Name | Type | Description | Purpose |
+|---|---|---|---|
+| `grid-size` | `number` |  Number of cells per column and row | Defines the size of the grid |
+| `frame-rate` | `number` | Number of `update-grid` calls per second | Specifies how fast the program runs |
+| `(setup-grid)` | `function` | Called once at startup | Initializes the data stored in the grid |
+| `(update-grid)` | `function` | Called every frame | Advances the simulation by mutating the data stored in the grid |
+| `(color-for-cell x y)` | `function` | Called for every cell every frame | Changes the cell color |
+| `(info-for-cell x y)` | `function` | Called when a cell is inspected | Describes the cell data in text |
+| `(handle-cell-tapped x y)` | `function` | Called when the user clicks cell `(x, y)` | Reacts on cell click |
+| `(handle-key-pressed key)` | `function` | Called when the user presses a key | Reacts on key press |
+
+
+## API Reference
 
 ### Cell Data
 
-Each cell can store data under different keys and can be addressed by its (x y) coordinates. For each key, a cell can store either a scalar value (boolean, number or string) or a dictionary, i.e. a symbol table that makes scalar values accessible via a key.
+Each cell can store data as a key-value store and can be addressed by its (x y) coordinates. For each key, a cell can store either a scalar value (boolean, number or string) or a dictionary, i.e. a symbol table that makes scalar values accessible via a key.
 
 #### Scalar Values
 
-| Signature | Description | Returns |
+| Function | Description | Returns |
 |---|---|---|
-| `(set-cell! x y key [value])` | Store value under key; default `#t` marks presence | void |
+| `(set-cell! x y key [value])` | Store value under key (default: `#t`) | void |
 | `(get-cell x y key)` | Value stored under key | dictionary \| value \| #t \| #f |
 | `(delete-cell! x y key)` | Remove key from cell | void |
 
 #### Dictionary Data
 
-| Signature | Description | Returns |
+| Function | Description | Returns |
 |---|---|---|
 | `(set-cell! x y key property value)` | Set a property on key's dictionary | void |
 | `(get-cell x y key property)` | Read a property from key's dictionary | value \| #f |
@@ -26,7 +49,7 @@ Each cell can store data under different keys and can be addressed by its (x y) 
 
 #### Miscellaneous
 
-| Signature | Description | Returns |
+| Function | Description | Returns |
 |---|---|---|
 | `(cell-info x y)` | String representation of a cell | string |
 
@@ -36,47 +59,70 @@ The grid itself can store data in the same fashion as a cell, this is useful for
 
 #### Scalar Values
 
-| Signature | Description | Returns |
+| Function | Description | Returns |
 |---|---|---|
-| `(set-grid! key [value])` | Store value under key; default `#t` marks presence | void |
+| `(set-grid! key [value])` | Store value under key (default: `#t`) | void |
 | `(get-grid key)` | Value stored under key | dictionary \| value \| #f |
 | `(delete-grid! key)` | Remove key | void |
 
 #### Dictionary Data
 
-| Signature | Description | Returns |
+| Function | Description | Returns |
 |---|---|---|
 | `(set-grid! key property value)` | Set a property on key's dictionary | void |
 | `(get-grid key property)` | Read a property from key's dictionary | value \| #f |
 | `(delete-grid! key property)` | Remove one property from key's dictionary | void |
 
-#### Miscellaneous
-
-| Signature | Description | Returns |
-|---|---|---|
-| `(grid-info)` | String representation of global data | string |
-
 ### Reset
 
-| Signature | Description | Returns |
+| Function | Description | Returns |
 |---|---|---|
 | `(clear!)` | Reset all cell data and global data | void |
+
+#### Miscellaneous
+
+| Function | Description | Returns |
+|---|---|---|
+| `(grid-info)` | String representation of global data | string |
 
 ### Dictionary Access
 
 Values can be retrieved from a dictionary with the `get` function.
 
-| Signature | Description | Returns |
+| Function | Description | Returns |
 |---|---|---|
 | `(get dictionary property)` | Read a property from a dictionary | value \| #f |
+
+### Operations on Multiple Cells
+
+These functions perform actions on multiple cells. The cells are passed via the `coords` parameter as a set of coordinate pairs `(x y)`. See  [Selecting Cells](#selecting-cells) for how to specify conditions to query the grid for cells.
+
+#### Spatial Queries
+
+| Function | Description | Returns |
+|---|---|---|
+| `(exists-at? coords x y)` | Check if (x, y) is in the coordinate set | bool |
+| `(bounds-of coords)` | Bounding box of the coordinate set | (x-min x-max y-min y-max) \| #f |
+
+#### Movement
+
+Multiple cells are moved or copied simultaneously, so overlapping source and destination positions are handled correctly.
+
+| Function | Description | Returns |
+|---|---|---|
+| `(move-by! coords key dx dy)` | Move key's data from coordinates by (dx, dy) | void |
+| `(move-to! coords key tx ty)` | Move key's data from coordinates to (tx, ty) | void |
+| `(copy-by! coords key dx dy)` | Copy key's data from coordinates by (dx, dy), keep originals | void |
+| `(copy-to! coords key tx ty)` | Copy key's data from coordinates to (tx, ty), keep originals | void |
+| `(delete-cells! coords key)` | Remove key from all cells with coordinates | void |
 
 ### Selecting Cells
 
 #### Coordinate Selectors
 
-Selectors return a set of (x y) coordinate pairs. They describe which cells to work with, and can be passed to with for iteration or to any operation in the next section. 
+Selectors are functions that query the grid for cells that satisfy certain conditions and return a set of (x y) coordinate pairs. They describe which cells to work with, and can be passed to with for iteration or to any operation in [Operations on Multiple Cells](#operations-on-multiple-cells).
 
-| Signature | Description | Returns |
+| Function | Description | Returns |
 |---|---|---|
 | `(select key)` | All cells that have key | set of coords |
 | `(select key property)` | Cells where key has a given property | set of coords |
@@ -95,7 +141,7 @@ Neighborhoods: `'moore`, `'von-neumann`, `'horizontal`, `'vertical`. Default rad
 
 Modifiers take one or more selectors and return a new selector, letting you combine, shift, or narrow coordinate sets through composition.
 
-| Signature | Description | Returns |
+| Function | Description | Returns |
 |---|---|---|
 | `(offset coords dx dy)` | Shift all coords by (dx, dy) | set of coords |
 | `(union s1 s2 ...)` | Coords in any of the sets | set of coords |
@@ -104,32 +150,11 @@ Modifiers take one or more selectors and return a new selector, letting you comb
 | `(one coords)` | Any single coord from the set | set of coords (0 or 1 element) |
 | `(nearest x y coords)` | Closest coord to (x, y) | set of coords (0 or 1 element) |
 
-### Operations on Selected Cells
-
-#### Spatial Queries
-
-| Signature | Description | Returns |
-|---|---|---|
-| `(exists-at? coords x y)` | Check if (x, y) is in the selector's result set | bool |
-| `(bounds-of coords)` | Bounding box of the selector | (x-min x-max y-min y-max) \| #f |
-
-#### Movement
-
-Multiple cells are moved or copied simultaneously, so overlapping source and destination positions are handled correctly.
-
-| Signature | Description | Returns |
-|---|---|---|
-| `(move-by! coords key dx dy)` | Move key's data from coords by (dx, dy) | void |
-| `(move-to! coords key tx ty)` | Move key's data from coords to (tx, ty) | void |
-| `(copy-by! coords key dx dy)` | Copy key's data from coords by (dx, dy), keep originals | void |
-| `(copy-to! coords key tx ty)` | Copy key's data from coords to (tx, ty), keep originals | void |
-| `(delete-cells! coords key)` | Remove key from all cells in selector | void |
-
 ### Color
 
 Colors are RGBA values with each channel in the range 0.0–1.0. Alpha is optional and defaults to fully opaque.
 
-| Signature | Description | Returns |
+| Function | Description | Returns |
 |---|---|---|
 | `(color r g b)` | RGB color, fully opaque; each channel 0.0–1.0 | color vector |
 | `(color r g b a)` | RGBA color with alpha | color vector |
@@ -141,9 +166,9 @@ Colors are RGBA values with each channel in the range 0.0–1.0. Alpha is option
 
 ### Storing Data on Cells
 
-Each cell can hold any number of named **keys**. A key can store a boolean presence marker, a scalar value, or a dictionary of named properties.
+Each cell can hold any number of named **keys**. A key can store a boolean flag, a scalar value, or a dictionary of named properties.
 
-**Presence** — mark a cell as having a feature:
+**Flag** — mark a cell as having a feature:
 
 ```racket
 (set-cell! x y 'wall)
