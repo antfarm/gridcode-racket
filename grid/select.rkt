@@ -1,8 +1,7 @@
 #lang racket
 
 (require racket/set
-         "grid.rkt"
-         "dictionary.rkt")
+         "grid.rkt")
 
 (provide select
          select-all
@@ -20,40 +19,34 @@
 
 (define select
   (case-lambda
-    [(key)
+    [(table)
      (list->set
-      (map (lambda (c) (list (first c) (second c)))
-           (cells-with-key key)))]
-    [(key property)
+      (filter-map (lambda (coord)
+                    (let* ([x (first coord)] [y (second coord)])
+                      (and (hash-has-key? (cell-data x y) table)
+                           (list x y))))
+                  (all-coordinates)))]
+    [(table key)
      (list->set
-      (filter-map (lambda (c)
-                    (define val (third c))
-                    (and (dictionary? val)
-                         (dictionary-ref val property)
-                         (list (first c) (second c))))
-                  (cells-with-key key)))]
-    [(key property value)
+      (filter-map (lambda (coord)
+                    (let* ([x (first coord)] [y (second coord)]
+                           [t (hash-ref (cell-data x y) table #f)])
+                      (and t
+                           (hash-has-key? t key)
+                           (list x y))))
+                  (all-coordinates)))]
+    [(table key value)
      (list->set
-      (filter-map (lambda (c)
-                    (define val   (third c))
-                    (define pval  (and (dictionary? val)
-                                       (dictionary-ref val property)))
-                    (and pval
-                         (if (list? value)
-                             (member pval value)
-                             (equal? pval value))
-                         (list (first c) (second c))))
-                  (cells-with-key key)))]))
-
-(define (cells-with-key key)
-  (filter-map (lambda (coord)
-                (let* ([x (first coord)]
-                       [y (second coord)]
-                       [cell (cell-data x y)])
-                  (if (hash-has-key? cell key)
-                      (list x y (hash-ref cell key))
-                      #f)))
-              (all-coordinates)))
+      (filter-map (lambda (coord)
+                    (let* ([x (first coord)] [y (second coord)]
+                           [t (hash-ref (cell-data x y) table #f)])
+                      (and t
+                           (let ([v (hash-ref t key #f)])
+                             (and (if (list? value)
+                                      (member v value)
+                                      (equal? v value))
+                                  (list x y))))))
+                  (all-coordinates)))]))
 
 (define (select-all)
   (list->set (all-coordinates)))

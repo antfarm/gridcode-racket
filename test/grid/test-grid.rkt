@@ -6,198 +6,153 @@
 
 ;; Cell data
 
-(test-case "set-cell!/get-cell — presence (3 args)"
+(test-case "set-cell! — flag form marks cell as having table"
            (init! 10)
-           (set-cell! 5 5 'key1)
-           (check-equal? (get-cell 5 5 'key1) #t))
+           (set-cell! 5 5 'wall)
+           (check-true (has? 5 5 'wall)))
 
-(test-case "set-cell!/get-cell — flat value (4 args)"
+(test-case "set-cell! — flag form does not overwrite existing table data"
            (init! 10)
-           (set-cell! 5 5 'key1 42)
-           (check-equal? (get-cell 5 5 'key1) 42))
+           (set-cell! 5 5 'wall 'strength 3)
+           (set-cell! 5 5 'wall)
+           (check-equal? (get-cell 5 5 'wall 'strength) 3))
 
-(test-case "set-cell!/get-cell — dictionary (5 args)"
+(test-case "set-cell! — flag and data forms compose"
            (init! 10)
-           (set-cell! 5 5 'key1 'prop1 100)
-           (check-equal? (get (get-cell 5 5 'key1) 'prop1) 100))
+           (set-cell! 5 5 'wall)
+           (set-cell! 5 5 'wall 'strength 5)
+           (check-true (has? 5 5 'wall))
+           (check-equal? (get-cell 5 5 'wall 'strength) 5))
 
-(test-case "set-cell! — multiple properties accumulate in dictionary"
+(test-case "set-cell!/get-cell — store and retrieve value"
            (init! 10)
-           (set-cell! 5 5 'key1 'prop1 1)
-           (set-cell! 5 5 'key1 'prop2 2)
-           (define d (get-cell 5 5 'key1))
-           (check-equal? (get d 'prop1) 1)
-           (check-equal? (get d 'prop2) 2))
+           (set-cell! 5 5 'ball 'dx 1)
+           (check-equal? (get-cell 5 5 'ball 'dx) 1))
 
-(test-case "set-cell! — overwrites existing property"
+(test-case "set-cell! — multiple keys accumulate in table"
            (init! 10)
-           (set-cell! 5 5 'key1 'prop1 1)
-           (set-cell! 5 5 'key1 'prop1 99)
-           (check-equal? (get (get-cell 5 5 'key1) 'prop1) 99))
+           (set-cell! 5 5 'ball 'dx 1)
+           (set-cell! 5 5 'ball 'dy -1)
+           (check-equal? (get-cell 5 5 'ball 'dx) 1)
+           (check-equal? (get-cell 5 5 'ball 'dy) -1))
 
-(test-case "set-cell! — multiple keys in same cell are independent"
+(test-case "set-cell! — overwrites existing key"
            (init! 10)
-           (set-cell! 3 3 'key1 'prop1 10)
-           (set-cell! 3 3 'key2 'prop1 20)
-           (check-equal? (get (get-cell 3 3 'key1) 'prop1) 10)
-           (check-equal? (get (get-cell 3 3 'key2) 'prop1) 20))
+           (set-cell! 5 5 'ball 'dx 1)
+           (set-cell! 5 5 'ball 'dx 99)
+           (check-equal? (get-cell 5 5 'ball 'dx) 99))
 
-(test-case "get-cell — returns #f for missing key"
+(test-case "set-cell! — multiple tables in same cell are independent"
            (init! 10)
-           (check-false (get-cell 5 5 'key1)))
+           (set-cell! 3 3 'ball 'dx 1)
+           (set-cell! 3 3 'wall 'strength 5)
+           (check-equal? (get-cell 3 3 'ball 'dx) 1)
+           (check-equal? (get-cell 3 3 'wall 'strength) 5))
 
-(test-case "get — returns property value from dictionary"
+(test-case "get-cell — returns #f for missing table"
            (init! 10)
-           (set-cell! 5 5 'key1 'prop1 99)
-           (check-equal? (get (get-cell 5 5 'key1) 'prop1) 99))
+           (check-false (get-cell 5 5 'ball 'dx)))
 
-(test-case "get — returns #f for missing property"
+(test-case "get-cell — returns #f for missing key in existing table"
            (init! 10)
-           (set-cell! 5 5 'key1 'prop1 1)
-           (check-false (get (get-cell 5 5 'key1) 'prop2)))
+           (set-cell! 5 5 'ball 'dx 1)
+           (check-false (get-cell 5 5 'ball 'dy)))
 
-(test-case "get — returns #f when passed #f"
-           (check-false (get #f 'prop1)))
-
-(test-case "get-cell — 4-arg reads property from dictionary"
+(test-case "delete-cell! — removes entire table"
            (init! 10)
-           (set-cell! 5 5 'key1 'prop1 99)
-           (check-equal? (get-cell 5 5 'key1 'prop1) 99))
+           (set-cell! 5 5 'ball 'dx 1)
+           (delete-cell! 5 5 'ball)
+           (check-false (get-cell 5 5 'ball 'dx)))
 
-(test-case "get-cell — 4-arg returns #f for missing property"
+(test-case "delete-cell! — removes single key from table"
            (init! 10)
-           (set-cell! 5 5 'key1 'prop1 1)
-           (check-false (get-cell 5 5 'key1 'prop2)))
+           (set-cell! 5 5 'ball 'dx 1)
+           (set-cell! 5 5 'ball 'dy -1)
+           (delete-cell! 5 5 'ball 'dx)
+           (check-false (get-cell 5 5 'ball 'dx))
+           (check-equal? (get-cell 5 5 'ball 'dy) -1))
 
-(test-case "get-cell — 4-arg returns #f when key holds a scalar"
+(test-case "delete-cell! — leaves other tables intact"
            (init! 10)
-           (set-cell! 5 5 'key1 42)
-           (check-false (get-cell 5 5 'key1 'prop1)))
+           (set-cell! 5 5 'ball 'dx 1)
+           (set-cell! 5 5 'wall 'strength 5)
+           (delete-cell! 5 5 'ball)
+           (check-false (get-cell 5 5 'ball 'dx))
+           (check-equal? (get-cell 5 5 'wall 'strength) 5))
 
-(test-case "delete-cell! — removes key"
+(test-case "delete-cell! — safe when table is absent"
            (init! 10)
-           (set-cell! 5 5 'key1)
-           (delete-cell! 5 5 'key1)
-           (check-false (get-cell 5 5 'key1)))
-
-(test-case "delete-cell! — leaves other keys intact"
-           (init! 10)
-           (set-cell! 5 5 'key1)
-           (set-cell! 5 5 'key2)
-           (delete-cell! 5 5 'key1)
-           (check-false (get-cell 5 5 'key1))
-           (check-true (get-cell 5 5 'key2)))
+           (check-not-exn (lambda () (delete-cell! 5 5 'ball))))
 
 (test-case "delete-cell! — safe when key is absent"
            (init! 10)
-           (check-not-exn (lambda () (delete-cell! 5 5 'key1))))
-
-(test-case "delete-cell! — removes a single property from dictionary"
-           (init! 10)
-           (set-cell! 5 5 'key1 'prop1 1)
-           (set-cell! 5 5 'key1 'prop2 2)
-           (delete-cell! 5 5 'key1 'prop1)
-           (check-false (get (get-cell 5 5 'key1) 'prop1))
-           (check-equal? (get (get-cell 5 5 'key1) 'prop2) 2))
-
-(test-case "delete-cell! — leaves key intact after property removal"
-           (init! 10)
-           (set-cell! 5 5 'key1 'prop1 1)
-           (delete-cell! 5 5 'key1 'prop1)
-           (check-true (exists-at? (select 'key1) 5 5)))
-
-(test-case "delete-cell! — safe when property is absent"
-           (init! 10)
-           (set-cell! 5 5 'key1 'prop1 1)
-           (check-not-exn (lambda () (delete-cell! 5 5 'key1 'prop2))))
+           (set-cell! 5 5 'ball 'dx 1)
+           (check-not-exn (lambda () (delete-cell! 5 5 'ball 'dy))))
 
 ;; Grid (global) data
 
-(test-case "set-grid!/get-grid — presence (1 arg)"
-           (init! 10)
-           (set-grid! 'key1)
-           (check-true (get-grid 'key1)))
-
-(test-case "set-grid!/get-grid — set and retrieve value"
-           (init! 10)
-           (set-grid! 'key1 42)
-           (check-equal? (get-grid 'key1) 42))
-
-(test-case "get-grid — returns #f for missing key"
-           (init! 10)
-           (check-false (get-grid 'key1)))
-
-
-(test-case "delete-grid! — removes key"
-           (init! 10)
-           (set-grid! 'key1 42)
-           (delete-grid! 'key1)
-           (check-false (get-grid 'key1)))
-
-(test-case "set-grid!/get-grid — dictionary (3 args)"
-           (init! 10)
-           (set-grid! 'player 'score 100)
-           (check-equal? (get (get-grid 'player) 'score) 100))
-
-(test-case "set-grid! — multiple properties accumulate in dictionary"
-           (init! 10)
-           (set-grid! 'player 'score 100)
-           (set-grid! 'player 'lives 3)
-           (define d (get-grid 'player))
-           (check-equal? (get d 'score) 100)
-           (check-equal? (get d 'lives) 3))
-
-(test-case "delete-grid! — removes one property from dictionary"
-           (init! 10)
-           (set-grid! 'player 'score 100)
-           (set-grid! 'player 'lives 3)
-           (delete-grid! 'player 'score)
-           (check-false (get (get-grid 'player) 'score))
-           (check-equal? (get (get-grid 'player) 'lives) 3))
-
-(test-case "get-grid — 2-arg reads property from dictionary"
+(test-case "set-grid!/get-grid — store and retrieve value"
            (init! 10)
            (set-grid! 'player 'score 100)
            (check-equal? (get-grid 'player 'score) 100))
 
-(test-case "get-grid — 2-arg returns #f for missing property"
+(test-case "set-grid! — multiple keys accumulate in table"
+           (init! 10)
+           (set-grid! 'player 'score 100)
+           (set-grid! 'player 'lives 3)
+           (check-equal? (get-grid 'player 'score) 100)
+           (check-equal? (get-grid 'player 'lives) 3))
+
+(test-case "get-grid — returns #f for missing table"
+           (init! 10)
+           (check-false (get-grid 'player 'score)))
+
+(test-case "get-grid — returns #f for missing key in existing table"
            (init! 10)
            (set-grid! 'player 'score 100)
            (check-false (get-grid 'player 'lives)))
 
-(test-case "get-grid — 2-arg returns #f when key holds a scalar"
+(test-case "delete-grid! — removes entire table"
            (init! 10)
-           (set-grid! 'key1 42)
-           (check-false (get-grid 'key1 'prop1)))
+           (set-grid! 'player 'score 100)
+           (delete-grid! 'player)
+           (check-false (get-grid 'player 'score)))
+
+(test-case "delete-grid! — removes single key from table"
+           (init! 10)
+           (set-grid! 'player 'score 100)
+           (set-grid! 'player 'lives 3)
+           (delete-grid! 'player 'score)
+           (check-false (get-grid 'player 'score))
+           (check-equal? (get-grid 'player 'lives) 3))
 
 ;; Grid-wide operations
 
-
 (test-case "clear! — resets all cell data and global data"
            (init! 10)
-           (set-cell! 5 5 'key1)
-           (set-grid! 'key1 1)
+           (set-cell! 5 5 'ball 'dx 1)
+           (set-grid! 'player 'score 1)
            (clear!)
-           (check-false (get-cell 5 5 'key1))
-           (check-false (get-grid 'key1)))
+           (check-false (get-cell 5 5 'ball 'dx))
+           (check-false (get-grid 'player 'score)))
 
 ;; delete-cells!
 
-(test-case "delete-cells! — removes key from all selected cells"
+(test-case "delete-cells! — removes table from all selected cells"
            (init! 10)
-           (set-cell! 1 1 'foo)
-           (set-cell! 2 2 'foo)
+           (set-cell! 1 1 'foo 'x 1)
+           (set-cell! 2 2 'foo 'x 2)
            (delete-cells! (select 'foo) 'foo)
-           (check-false (get-cell 1 1 'foo))
-           (check-false (get-cell 2 2 'foo)))
+           (check-false (get-cell 1 1 'foo 'x))
+           (check-false (get-cell 2 2 'foo 'x)))
 
-(test-case "delete-cells! — leaves other keys intact"
+(test-case "delete-cells! — leaves other tables intact"
            (init! 10)
-           (set-cell! 5 5 'foo)
-           (set-cell! 5 5 'bar)
+           (set-cell! 5 5 'foo 'x 1)
+           (set-cell! 5 5 'bar 'x 1)
            (delete-cells! (select 'foo) 'foo)
-           (check-false (get-cell 5 5 'foo))
-           (check-true  (get-cell 5 5 'bar)))
+           (check-false (get-cell 5 5 'foo 'x))
+           (check-equal? (get-cell 5 5 'bar 'x) 1))
 
 (test-case "delete-cells! — does nothing for empty selector"
            (init! 10)
@@ -205,36 +160,30 @@
 
 ;; copy-by!
 
-(test-case "copy-by! — copies a cell without removing the original"
+(test-case "copy-by! — copies table without removing original"
            (init! 10)
-           (set-cell! 2 2 'foo)
+           (set-cell! 2 2 'foo 'v 1)
            (copy-by! (select 'foo) 'foo 1 0)
-           (check-true (get-cell 2 2 'foo))
-           (check-true (get-cell 3 2 'foo)))
+           (check-equal? (get-cell 2 2 'foo 'v) 1)
+           (check-equal? (get-cell 3 2 'foo 'v) 1))
 
-(test-case "copy-by! — preserves scalar value"
-           (init! 10)
-           (set-cell! 2 2 'foo 42)
-           (copy-by! (select 'foo) 'foo 0 1)
-           (check-equal? (get-cell 2 3 'foo) 42))
-
-(test-case "copy-by! — preserves dictionary data"
+(test-case "copy-by! — preserves all keys in table"
            (init! 10)
            (set-cell! 2 2 'ball 'dx 1)
            (set-cell! 2 2 'ball 'dy -1)
            (copy-by! (select 'ball) 'ball 1 1)
-           (check-equal? (get (get-cell 3 3 'ball) 'dx) 1)
-           (check-equal? (get (get-cell 3 3 'ball) 'dy) -1))
+           (check-equal? (get-cell 3 3 'ball 'dx) 1)
+           (check-equal? (get-cell 3 3 'ball 'dy) -1))
 
-(test-case "copy-by! — only copies specified key, leaves others"
+(test-case "copy-by! — only copies specified table, leaves others"
            (init! 10)
-           (set-cell! 2 2 'foo)
-           (set-cell! 2 2 'bar)
+           (set-cell! 2 2 'foo 'v 1)
+           (set-cell! 2 2 'bar 'v 1)
            (copy-by! (select 'foo) 'foo 1 0)
-           (check-true  (get-cell 2 2 'foo))
-           (check-true  (get-cell 2 2 'bar))
-           (check-true  (get-cell 3 2 'foo))
-           (check-false (get-cell 3 2 'bar)))
+           (check-equal? (get-cell 2 2 'foo 'v) 1)
+           (check-equal? (get-cell 2 2 'bar 'v) 1)
+           (check-equal? (get-cell 3 2 'foo 'v) 1)
+           (check-false  (get-cell 3 2 'bar 'v)))
 
 (test-case "copy-by! — does nothing for empty selector"
            (init! 10)
@@ -242,28 +191,22 @@
 
 ;; copy-to!
 
-(test-case "copy-to! — copies a cell without removing the original"
+(test-case "copy-to! — copies table without removing original"
            (init! 10)
-           (set-cell! 1 1 'foo)
+           (set-cell! 1 1 'foo 'v 1)
            (copy-to! (select 'foo) 'foo 7 8)
-           (check-true (get-cell 1 1 'foo))
-           (check-true (get-cell 7 8 'foo)))
+           (check-equal? (get-cell 1 1 'foo 'v) 1)
+           (check-equal? (get-cell 7 8 'foo 'v) 1))
 
-(test-case "copy-to! — preserves scalar value"
+(test-case "copy-to! — only copies specified table, leaves others"
            (init! 10)
-           (set-cell! 1 1 'foo 99)
-           (copy-to! (select 'foo) 'foo 5 5)
-           (check-equal? (get-cell 5 5 'foo) 99))
-
-(test-case "copy-to! — only copies specified key, leaves others"
-           (init! 10)
-           (set-cell! 1 1 'foo)
-           (set-cell! 1 1 'bar)
+           (set-cell! 1 1 'foo 'v 1)
+           (set-cell! 1 1 'bar 'v 1)
            (copy-to! (select 'foo) 'foo 7 8)
-           (check-true  (get-cell 1 1 'foo))
-           (check-true  (get-cell 1 1 'bar))
-           (check-true  (get-cell 7 8 'foo))
-           (check-false (get-cell 7 8 'bar)))
+           (check-equal? (get-cell 1 1 'foo 'v) 1)
+           (check-equal? (get-cell 1 1 'bar 'v) 1)
+           (check-equal? (get-cell 7 8 'foo 'v) 1)
+           (check-false  (get-cell 7 8 'bar 'v)))
 
 (test-case "copy-to! — does nothing for empty selector"
            (init! 10)
@@ -271,46 +214,40 @@
 
 ;; move-by!
 
-(test-case "move-by! — moves a single cell by dx dy"
+(test-case "move-by! — moves table by dx dy"
            (init! 10)
-           (set-cell! 2 2 'foo)
+           (set-cell! 2 2 'foo 'v 1)
            (move-by! (select 'foo) 'foo 1 0)
-           (check-false (get-cell 2 2 'foo))
-           (check-true  (get-cell 3 2 'foo)))
+           (check-false (get-cell 2 2 'foo 'v))
+           (check-equal? (get-cell 3 2 'foo 'v) 1))
 
-(test-case "move-by! — preserves scalar value"
-           (init! 10)
-           (set-cell! 2 2 'foo 42)
-           (move-by! (select 'foo) 'foo 0 1)
-           (check-equal? (get-cell 2 3 'foo) 42))
-
-(test-case "move-by! — preserves dictionary data"
+(test-case "move-by! — preserves all keys in table"
            (init! 10)
            (set-cell! 2 2 'ball 'dx 1)
            (set-cell! 2 2 'ball 'dy -1)
            (move-by! (select 'ball) 'ball 1 1)
-           (check-equal? (get (get-cell 3 3 'ball) 'dx) 1)
-           (check-equal? (get (get-cell 3 3 'ball) 'dy) -1))
+           (check-equal? (get-cell 3 3 'ball 'dx) 1)
+           (check-equal? (get-cell 3 3 'ball 'dy) -1))
 
 (test-case "move-by! — moves multiple cells"
            (init! 10)
-           (set-cell! 1 1 'foo)
-           (set-cell! 2 2 'foo)
+           (set-cell! 1 1 'foo 'v 1)
+           (set-cell! 2 2 'foo 'v 1)
            (move-by! (select 'foo) 'foo 1 0)
-           (check-false (get-cell 1 1 'foo))
-           (check-false (get-cell 2 2 'foo))
-           (check-true  (get-cell 2 1 'foo))
-           (check-true  (get-cell 3 2 'foo)))
+           (check-false (get-cell 1 1 'foo 'v))
+           (check-false (get-cell 2 2 'foo 'v))
+           (check-equal? (get-cell 2 1 'foo 'v) 1)
+           (check-equal? (get-cell 3 2 'foo 'v) 1))
 
-(test-case "move-by! — only moves specified key, leaves others"
+(test-case "move-by! — only moves specified table, leaves others"
            (init! 10)
-           (set-cell! 2 2 'foo)
-           (set-cell! 2 2 'bar)
+           (set-cell! 2 2 'foo 'v 1)
+           (set-cell! 2 2 'bar 'v 1)
            (move-by! (select 'foo) 'foo 1 0)
-           (check-false (get-cell 2 2 'foo))
-           (check-true  (get-cell 2 2 'bar))
-           (check-true  (get-cell 3 2 'foo))
-           (check-false (get-cell 3 2 'bar)))
+           (check-false (get-cell 2 2 'foo 'v))
+           (check-equal? (get-cell 2 2 'bar 'v) 1)
+           (check-equal? (get-cell 3 2 'foo 'v) 1)
+           (check-false  (get-cell 3 2 'bar 'v)))
 
 (test-case "move-by! — does nothing for empty selector"
            (init! 10)
@@ -318,55 +255,74 @@
 
 ;; move-to!
 
-(test-case "move-to! — moves a single cell to absolute position"
+(test-case "move-to! — moves table to absolute position"
            (init! 10)
-           (set-cell! 1 1 'foo)
+           (set-cell! 1 1 'foo 'v 1)
            (move-to! (select 'foo) 'foo 7 8)
-           (check-false (get-cell 1 1 'foo))
-           (check-true  (get-cell 7 8 'foo)))
+           (check-false (get-cell 1 1 'foo 'v))
+           (check-equal? (get-cell 7 8 'foo 'v) 1))
 
-(test-case "move-to! — preserves scalar value"
+(test-case "move-to! — only moves specified table, leaves others"
            (init! 10)
-           (set-cell! 1 1 'foo 99)
-           (move-to! (select 'foo) 'foo 5 5)
-           (check-equal? (get-cell 5 5 'foo) 99))
-
-(test-case "move-to! — only moves specified key, leaves others"
-           (init! 10)
-           (set-cell! 1 1 'foo)
-           (set-cell! 1 1 'bar)
+           (set-cell! 1 1 'foo 'v 1)
+           (set-cell! 1 1 'bar 'v 1)
            (move-to! (select 'foo) 'foo 7 8)
-           (check-false (get-cell 1 1 'foo))
-           (check-true  (get-cell 1 1 'bar))
-           (check-true  (get-cell 7 8 'foo))
-           (check-false (get-cell 7 8 'bar)))
+           (check-false (get-cell 1 1 'foo 'v))
+           (check-equal? (get-cell 1 1 'bar 'v) 1)
+           (check-equal? (get-cell 7 8 'foo 'v) 1)
+           (check-false  (get-cell 7 8 'bar 'v)))
 
 (test-case "move-to! — does nothing for empty selector"
            (init! 10)
            (check-not-exn (lambda () (move-to! (select 'foo) 'foo 5 5))))
 
-;; exists-at?
+;; has?
 
-(test-case "exists-at? — returns #t when selector contains (x y)"
+(test-case "has? — returns #t when cell has table"
            (init! 10)
-           (set-cell! 3 4 'foo)
-           (check-true (exists-at? (select 'foo) 3 4)))
+           (set-cell! 5 5 'ball 'dx 1)
+           (check-true (has? 5 5 'ball)))
 
-(test-case "exists-at? — returns #f when (x y) is not in selector"
+(test-case "has? — returns #f when cell does not have table"
            (init! 10)
-           (set-cell! 3 4 'foo)
-           (check-false (exists-at? (select 'foo) 5 5)))
+           (check-false (has? 5 5 'ball)))
 
-(test-case "exists-at? — returns #f for empty selector"
+(test-case "has? — returns #t when table has key"
            (init! 10)
-           (check-false (exists-at? (select 'foo) 3 4)))
+           (set-cell! 5 5 'ball 'dx 1)
+           (check-true (has? 5 5 'ball 'dx)))
+
+(test-case "has? — returns #f when table does not have key"
+           (init! 10)
+           (set-cell! 5 5 'ball 'dx 1)
+           (check-false (has? 5 5 'ball 'dy)))
+
+(test-case "has? — returns #f when table is absent (key form)"
+           (init! 10)
+           (check-false (has? 5 5 'ball 'dx)))
+
+;; has-at?
+
+(test-case "has-at? — returns #t when selector contains (x y)"
+           (init! 10)
+           (set-cell! 3 4 'foo 'v 1)
+           (check-true (has-at? (select 'foo) 3 4)))
+
+(test-case "has-at? — returns #f when (x y) is not in selector"
+           (init! 10)
+           (set-cell! 3 4 'foo 'v 1)
+           (check-false (has-at? (select 'foo) 5 5)))
+
+(test-case "has-at? — returns #f for empty selector"
+           (init! 10)
+           (check-false (has-at? (select 'foo) 3 4)))
 
 ;; bounds-of
 
 (test-case "bounds-of — returns bounding box"
            (init! 10)
-           (set-cell! 2 3 'foo)
-           (set-cell! 5 1 'foo)
+           (set-cell! 2 3 'foo 'v 1)
+           (set-cell! 5 1 'foo 'v 1)
            (check-equal? (bounds-of (select 'foo)) '(2 5 1 3)))
 
 (test-case "bounds-of — returns #f for empty selector"
@@ -375,5 +331,39 @@
 
 (test-case "bounds-of — single cell returns equal min and max"
            (init! 10)
-           (set-cell! 4 7 'foo)
+           (set-cell! 4 7 'foo 'v 1)
            (check-equal? (bounds-of (select 'foo)) '(4 4 7 7)))
+
+;; select
+
+(test-case "select — by table: returns cells with the table"
+           (init! 10)
+           (set-cell! 1 1 'ball 'dx 1)
+           (set-cell! 2 2 'ball 'dx -1)
+           (check-true (has-at? (select 'ball) 1 1))
+           (check-true (has-at? (select 'ball) 2 2))
+           (check-false (has-at? (select 'ball) 3 3)))
+
+(test-case "select — by table key: returns cells where table has key"
+           (init! 10)
+           (set-cell! 1 1 'ball 'dx 1)
+           (set-cell! 2 2 'ball 'dy -1)
+           (check-true  (has-at? (select 'ball 'dx) 1 1))
+           (check-false (has-at? (select 'ball 'dx) 2 2)))
+
+(test-case "select — by table key value: returns cells where value matches"
+           (init! 10)
+           (set-cell! 1 1 'ball 'dx 1)
+           (set-cell! 2 2 'ball 'dx -1)
+           (check-true  (has-at? (select 'ball 'dx 1)  1 1))
+           (check-false (has-at? (select 'ball 'dx 1)  2 2))
+           (check-true  (has-at? (select 'ball 'dx -1) 2 2)))
+
+(test-case "select — by value list: returns cells where value is in list"
+           (init! 10)
+           (set-cell! 1 1 'ball 'dx  1)
+           (set-cell! 2 2 'ball 'dx -1)
+           (set-cell! 3 3 'ball 'dx  0)
+           (check-true  (has-at? (select 'ball 'dx '(1 -1)) 1 1))
+           (check-true  (has-at? (select 'ball 'dx '(1 -1)) 2 2))
+           (check-false (has-at? (select 'ball 'dx '(1 -1)) 3 3)))

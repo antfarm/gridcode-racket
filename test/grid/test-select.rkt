@@ -7,54 +7,59 @@
 
 ;; select (key)
 
-(test-case "select — returns coordinates of cells with key"
+(test-case "select — returns coordinates of cells with table"
   (init! 10)
-  (set-cell! 2 3 'wall)
-  (set-cell! 5 7 'wall)
+  (set-cell! 2 3 'wall 'v 1)
+  (set-cell! 5 7 'wall 'v 1)
   (check-equal? (select 'wall) (set '(2 3) '(5 7))))
 
 (test-case "select — returns empty set when no cells match"
   (init! 10)
   (check-equal? (select 'wall) (set)))
 
-(test-case "select — finds cells with #f value"
+(test-case "select — finds cells with table present"
   (init! 10)
-  (set-cell! 3 3 'foo #f)
+  (set-cell! 3 3 'foo 'v 0)
   (check-equal? (select 'foo) (set '(3 3))))
 
-;; select (key property)
-
-(test-case "select — filters cells with dictionary property present"
+(test-case "select — finds cells set with flag form (no keys)"
   (init! 10)
-  (set-cell! 1 1 'enemy 'state 'active)
-  (set-cell! 2 2 'enemy 'state 'frozen)
-  (set-cell! 3 3 'wall)
+  (set-cell! 4 6 'wall)
+  (check-equal? (select 'wall) (set '(4 6))))
+
+;; select (table key)
+
+(test-case "select — filters cells where table has key"
+  (init! 10)
+  (set-cell! 1 1 'enemy 'state 1)
+  (set-cell! 2 2 'enemy 'state 2)
+  (set-cell! 3 3 'wall 'v 1)
   (check-equal? (select 'enemy 'state) (set '(1 1) '(2 2))))
 
-(test-case "select — property filter excludes non-dictionary cells"
+(test-case "select — key filter excludes cells without that key"
   (init! 10)
-  (set-cell! 1 1 'wall)
+  (set-cell! 1 1 'wall 'v 1)
   (check-equal? (select 'wall 'dx) (set)))
 
 ;; select (key property value)
 
-(test-case "select — filters by exact property value"
+(test-case "select — filters by exact key value"
   (init! 10)
-  (set-cell! 1 1 'enemy 'state 'active)
-  (set-cell! 2 2 'enemy 'state 'frozen)
-  (check-equal? (select 'enemy 'state 'active) (set '(1 1))))
+  (set-cell! 1 1 'enemy 'state 1)
+  (set-cell! 2 2 'enemy 'state 2)
+  (check-equal? (select 'enemy 'state 1) (set '(1 1))))
 
 (test-case "select — returns empty set when value does not match"
   (init! 10)
-  (set-cell! 1 1 'enemy 'state 'active)
-  (check-equal? (select 'enemy 'state 'frozen) (set)))
+  (set-cell! 1 1 'enemy 'state 1)
+  (check-equal? (select 'enemy 'state 2) (set)))
 
 (test-case "select — filters by list of values"
   (init! 10)
-  (set-cell! 1 1 'enemy 'state 'active)
-  (set-cell! 2 2 'enemy 'state 'frozen)
-  (set-cell! 3 3 'enemy 'state 'dead)
-  (check-equal? (select 'enemy 'state '(active frozen)) (set '(1 1) '(2 2))))
+  (set-cell! 1 1 'enemy 'state 1)
+  (set-cell! 2 2 'enemy 'state 2)
+  (set-cell! 3 3 'enemy 'state 3)
+  (check-equal? (select 'enemy 'state '(1 2)) (set '(1 1) '(2 2))))
 
 ;; select-all
 

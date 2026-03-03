@@ -19,52 +19,41 @@
 
  (define (neighbors-alive-count x y)
    (length (filter (lambda (coord)
-                     (get-cell (first coord) (second coord) 'alive))
+                     (has? (first coord) (second coord) 'alive))
                    (neighbors x y))))
 
  (define (setup-grid)
    (define percent-alive 20)
-   (for* ((x (in-range grid-size))
-          (y (in-range grid-size)))
-     (define is-alive (< (random 100) percent-alive))
-     (set-cell! x y 'alive is-alive)
-     (set-cell! x y 'age (if is-alive 1 0))))
+   (with (select-all) as (x y)
+         (when (< (random 100) percent-alive)
+           (set-cell! x y 'alive 'age 1))))
 
  (define (update-grid)
-   (for* ((x (in-range grid-size))
-          (y (in-range grid-size)))
-     (set-cell! x y 'count (neighbors-alive-count x y)))
+   (with (select-all) as (x y)
+         (set-cell! x y 'update 'neighbors (neighbors-alive-count x y)))
 
-   (for* ((x (in-range grid-size))
-          (y (in-range grid-size)))
-     (define state (get-cell x y 'alive))
-     (define count (get-cell x y 'count))
-     (define age (get-cell x y 'age))
-     (if state
-         (if (or (= count 2) (= count 3))
-             (set-cell! x y 'age (+ age 1))  ; survival
-             (begin  ; death
-               (set-cell! x y 'alive #f)
-               (set-cell! x y 'age 0)))
-         (when (= count 3)  ; birth
-           (set-cell! x y 'alive #t)
-           (set-cell! x y 'age 1)))))
+   (with (select-all) as (x y)
+         (define count (get-cell x y 'update 'neighbors))
+         (if (has? x y 'alive)
+             (if (or (= count 2) (= count 3))
+                 (set-cell! x y 'alive 'age (+ (get-cell x y 'alive 'age) 1))
+                 (delete-cell! x y 'alive))
+             (when (= count 3)
+               (set-cell! x y 'alive 'age 1)))))
 
  (define (color-for-cell x y)
-   (define state (get-cell x y 'alive))
-   (define age (get-cell x y 'age))
-   (define opacity (/ (- 10 (min age 6)) 10.0))
-   (if state
-       (with-opacity (color 1.0 0.8 0.2) opacity)
+   (define age (get-cell x y 'alive 'age))
+   (if (has? x y 'alive)
+       (with-opacity (color 1.0 0.8 0.2) (/ (- 10 (min age 6)) 10.0))
        (color 0.0 0.0 0.0)))
 
  (define (info-for-cell x y)
    (cell-info x y))
 
  (define (handle-cell-tapped x y)
-   (define state (get-cell x y 'alive))
-   (set-cell! x y 'alive (not state))
-   (set-cell! x y 'age (if state 0 1)))
+   (if (has? x y 'alive)
+       (delete-cell! x y 'alive)
+       (set-cell! x y 'alive 'age 1)))
 
  (define (handle-key-pressed key)
    (void)))

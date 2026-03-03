@@ -9,27 +9,26 @@
  (define (setup-grid)
    (define x (quotient grid-size 2))
    (define y x)
-   (set-cell! x y 'ant (random-direction))
-   (set-cell! x y 'trail 1.0))
+   (set-cell! x y 'ant 'direction (random-direction))
+   (set-cell! x y 'trail 'concentration 1.0))
 
  (define (update-grid)
    (decay-trails)
 
-   (define idle-ticks (or (get-grid 'idle-ticks) 0))
+   (define idle-ticks (or (get-grid 'keyboard 'idle-ticks) 0))
    (when (and (> idle-ticks 50) (< (random 100) 3))
      (update-ant (random-direction)))
-   (set-grid! 'idle-ticks (+ idle-ticks 1))
+   (set-grid! 'keyboard 'idle-ticks (+ idle-ticks 1))
 
    (move-ant))
 
  (define (color-for-cell x y)
    (cond
-     ;; use exists-at? + select
-     ((get-cell x y 'ant) (color 1.0 0.8 0.2))
-     ((get-cell x y 'trail) (begin
-                              (define concentration (get-cell x y 'trail))
-                              (define opacity (min 1.0 (* concentration 0.5)))
-                              (color 0.2 0.9 0.0 opacity)))
+     ((has? x y 'ant) (color 1.0 0.8 0.2))
+     ((has? x y 'trail) (begin
+                          (define concentration (get-cell x y 'trail 'concentration))
+                          (define opacity (min 1.0 (* concentration 0.5)))
+                          (color 0.2 0.9 0.0 opacity)))
      (else (color 0.0 0.0 0.0))))
 
  (define (info-for-cell x y)
@@ -42,7 +41,7 @@
    (cond
      ((member key '(left right up down))
       (update-ant key)
-      (set-grid! 'idle-ticks 0))
+      (set-grid! 'keyboard 'idle-ticks 0))
      ((eq? key #\space)
       (clear!)
       (setup-grid))
@@ -50,11 +49,11 @@
 
  (define (update-ant direction)
    (with (select 'ant) as (x y)
-         (set-cell! x y 'ant direction)))
+         (set-cell! x y 'ant 'direction direction)))
 
  (define (move-ant)
    (with (select 'ant) as (x y)
-         (define direction (get-cell x y 'ant))
+         (define direction (get-cell x y 'ant 'direction))
          (define-list (dx dy)
            (case direction
              ((left)  (list -1  0))
@@ -64,10 +63,10 @@
          (define new-x (modulo (+ x dx) grid-size))
          (define new-y (modulo (+ y dy) grid-size))
          (delete-cell! x y 'ant)
-         (set-cell! new-x new-y 'ant direction)
+         (set-cell! new-x new-y 'ant 'direction direction)
 
-         (define concentration (or (get-cell new-x new-y 'trail) 0))
-         (set-cell! new-x new-y 'trail (+ concentration 1.0))))
+         (define concentration (or (get-cell new-x new-y 'trail 'concentration) 0))
+         (set-cell! new-x new-y 'trail 'concentration (+ concentration 1.0))))
 
  (define (random-direction)
    (list-ref '(left right up down) (random 4)))
@@ -75,8 +74,8 @@
  (define (decay-trails)
    (define evaporation-rate 0.07)
    (with (select 'trail) as (x y)
-         (define concentration (get-cell x y 'trail))
+         (define concentration (get-cell x y 'trail 'concentration))
          (define new-concentration (* concentration (- 1.0 evaporation-rate)))
          (if (< new-concentration 0.07)
              (delete-cell! x y 'trail)
-             (set-cell! x y 'trail new-concentration)))))
+             (set-cell! x y 'trail 'concentration new-concentration)))))

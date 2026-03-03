@@ -29,69 +29,37 @@ The `program` macro takes a name as an argument and expects a set of definitions
 
 ### Cell Data
 
-Each cell can store data as a key-value store and can be addressed by its (x y) coordinates. For each key, a cell can store either a scalar value (boolean, number or string) or a dictionary, i.e. a symbol table that makes scalar values accessible via a key.
-
-#### Scalar Values
-
-| Function | Description | Returns |
-|---|---|---|
-| `(set-cell! x y key [value])` | Store value under key (default: `#t`) | void |
-| `(get-cell x y key)` | Value stored under key | dictionary \| value \| #t \| #f |
-| `(delete-cell! x y key)` | Remove key from cell | void |
-
-#### Dictionary Data
+Each cell can store several named symbol tables that map from keys to values.
+A cell is addressed by its (x y) coordinates, a stored value by the tuple (x y table key).
 
 | Function | Description | Returns |
 |---|---|---|
-| `(set-cell! x y key property value)` | Set a property on key's dictionary | void |
-| `(get-cell x y key property)` | Read a property from key's dictionary | value \| #f |
-| `(delete-cell! x y key property)` | Remove one property from key's dictionary | void |
-
-#### Miscellaneous
-
-| Function | Description | Returns |
-|---|---|---|
-| `(cell-info x y)` | String representation of a cell | string |
+| `(set-cell! x y table)` | Set a flag on the cell | `void` |
+| `(set-cell! x y table key value)` | Store value in table at key | `void` |
+| `(get-cell x y table key)` | Read value in table at key | `value` \| `#f` |
+| `(delete-cell! x y table key)` | Remove key from table | `void` |
+| `(delete-cell! x y table)` | Remove entire table from cell | `void` |
+| `(has? x y table)` | Check if cell has a table with that name | `bool` |
+| `(has? x y table key)` | Check if the table has a given key | `bool` |
+| `(cell-info x y)` | String representation of a cell | `string` |
 
 ### Global Data
 
 The grid itself can store data in the same fashion as a cell, this is useful for storing global data.
 
-#### Scalar Values
-
 | Function | Description | Returns |
 |---|---|---|
-| `(set-grid! key [value])` | Store value under key (default: `#t`) | void |
-| `(get-grid key)` | Value stored under key | dictionary \| value \| #f |
-| `(delete-grid! key)` | Remove key | void |
-
-#### Dictionary Data
-
-| Function | Description | Returns |
-|---|---|---|
-| `(set-grid! key property value)` | Set a property on key's dictionary | void |
-| `(get-grid key property)` | Read a property from key's dictionary | value \| #f |
-| `(delete-grid! key property)` | Remove one property from key's dictionary | void |
+| `(set-grid! table key value)` | Store value in table at key | void |
+| `(get-grid table key)` | Read value in table at key | value \| #f |
+| `(delete-grid! table key)` | Remove key from table | void |
+| `(delete-grid! table)` | Remove entire table | void |
+| `(grid-info)` | String representation of global data | string |
 
 ### Reset
 
 | Function | Description | Returns |
 |---|---|---|
 | `(clear!)` | Reset all cell data and global data | void |
-
-#### Miscellaneous
-
-| Function | Description | Returns |
-|---|---|---|
-| `(grid-info)` | String representation of global data | string |
-
-### Dictionary Access
-
-Values can be retrieved from a dictionary with the `get` function.
-
-| Function | Description | Returns |
-|---|---|---|
-| `(get dictionary property)` | Read a property from a dictionary | value \| #f |
 
 ### Operations on Multiple Cells
 
@@ -101,7 +69,7 @@ These functions perform actions on multiple cells. The cells are passed via the 
 
 | Function | Description | Returns |
 |---|---|---|
-| `(exists-at? coords x y)` | Check if (x, y) is in the coordinate set | bool |
+| `(has-at? coords x y)` | Check if (x, y) is in the coordinate set | bool |
 | `(bounds-of coords)` | Bounding box of the coordinate set | (x-min x-max y-min y-max) \| #f |
 
 #### Movement
@@ -110,11 +78,11 @@ Multiple cells are moved or copied simultaneously, so overlapping source and des
 
 | Function | Description | Returns |
 |---|---|---|
-| `(move-by! coords key dx dy)` | Move key's data from coordinates by (dx, dy) | void |
-| `(move-to! coords key tx ty)` | Move key's data from coordinates to (tx, ty) | void |
-| `(copy-by! coords key dx dy)` | Copy key's data from coordinates by (dx, dy), keep originals | void |
-| `(copy-to! coords key tx ty)` | Copy key's data from coordinates to (tx, ty), keep originals | void |
-| `(delete-cells! coords key)` | Remove key from all cells with coordinates | void |
+| `(move-by! coords table dx dy)` | Move the table's data from coordinates by (dx, dy) | void |
+| `(move-to! coords table tx ty)` | Move the table's data from coordinates to (tx, ty) | void |
+| `(copy-by! coords table dx dy)` | Copy the table's data from coordinates by (dx, dy), keep originals | void |
+| `(copy-to! coords table tx ty)` | Copy the table's data from coordinates to (tx, ty), keep originals | void |
+| `(delete-cells! coords table)` | Remove the table from all cells with coordinates | void |
 
 ### Selecting Cells
 
@@ -124,9 +92,9 @@ Selectors are functions that query the grid for cells that satisfy certain condi
 
 | Function | Description | Returns |
 |---|---|---|
-| `(select key)` | All cells that have key | set of coords |
-| `(select key property)` | Cells where key has a given property | set of coords |
-| `(select key property value)` | Cells where key's property equals value | set of coords |
+| `(select table)` | All cells that have a table with that name | set of coords |
+| `(select table key)` | Cells where the table has a given key | set of coords |
+| `(select table key value)` | Cells where the table's key equals value | set of coords |
 | `(select-all)` | Every cell on the grid | set of coords |
 | `(select-xy x y)` | A single cell | set of coords |
 | `(select-row y)` | All cells in row y | set of coords |
@@ -166,41 +134,21 @@ Colors are RGBA values with each channel in the range 0.0–1.0. Alpha is option
 
 ### Storing Data on Cells
 
-Each cell can hold any number of named **keys**. A key can store a boolean flag, a scalar value, or a dictionary of named properties.
-
-**Flag** — mark a cell as having a feature:
-
-```racket
-(set-cell! x y 'wall)
-(get-cell  x y 'wall)      ; → #t | #f
-(delete-cell! x y 'wall)
-```
-
-**Scalar** — store a single value under a key:
-
-```racket
-(set-cell! x y 'trail 0.8)
-(get-cell  x y 'trail)     ; → value | #f
-(delete-cell! x y 'trail)
-```
-
-**Dictionary** — store a named collection of properties under a key. Multiple `set-cell!` calls accumulate:
+Each cell can hold any number of named **tables**. A table maps keys to values. Multiple `set-cell!` calls accumulate:
 
 ```racket
 (set-cell! x y 'ball 'dx  1)
 (set-cell! x y 'ball 'dy -1)
-(define b (get-cell x y 'ball))    ; → dictionary | #f
-(get b 'dx)                        ; → value | #f
-(or (get b 'dx) 0)                 ; → value | default
-(delete-cell! x y 'ball 'dx)       ; remove one property
-(delete-cell! x y 'ball)           ; remove whole dictionary
+(get-cell x y 'ball 'dx)           ; → value | #f
+(delete-cell! x y 'ball 'dx)       ; remove one key
+(delete-cell! x y 'ball)           ; remove whole table
 ```
 
-A cell can hold multiple keys simultaneously:
+A cell can hold multiple tables simultaneously:
 
 ```racket
-(set-cell! x y 'wall)
-(set-cell! x y 'ball 'dx 1)        ; same cell holds both
+(set-cell! x y 'wall 'strength 1)
+(set-cell! x y 'ball 'dx 1)        ; same cell holds both tables
 ```
 
 ---
@@ -209,11 +157,11 @@ A cell can hold multiple keys simultaneously:
 
 A **selector** is a set of `(x y)` coordinate pairs. Selector functions describe *which cells* to work with; they don't read or write cell data.
 
-**Select by key** — all cells that have a given key:
+**Select by table name** — all cells that have a table with that name:
 
 ```racket
 (select 'wall)                         ; all wall cells
-(select 'ball 'dx)                     ; ball cells that have a 'dx property
+(select 'ball 'dx)                     ; ball cells that have a 'dx key
 (select 'ball 'dx 1)                   ; ball cells where dx = 1
 (select 'ball 'dx '(-1 1))             ; ball cells where dx is -1 or 1
 ```
@@ -274,8 +222,7 @@ When a selector contains exactly one cell (e.g. a single ball), `with` is used t
 
 ```racket
 (with (select 'ball) as (ball-x ball-y)
-  (define ball (get-cell ball-x ball-y 'ball))
-  (define dx (get ball 'dx))
+  (define dx (get-cell ball-x ball-y 'ball 'dx))
   ...)
 ```
 
@@ -290,10 +237,10 @@ When a selector contains exactly one cell (e.g. a single ball), `with` is used t
 
 ### Spatial Queries
 
-`exists-at?` checks whether a specific coordinate is in a selector:
+`has-at?` checks whether a specific coordinate is in a selector:
 
 ```racket
-(exists-at? (select 'wall) new-x new-y)    ; → #t | #f
+(has-at? (select 'wall) new-x new-y)    ; → #t | #f
 ```
 
 `bounds-of` returns the bounding box of a selector:
@@ -306,7 +253,7 @@ When a selector contains exactly one cell (e.g. a single ball), `with` is used t
 
 ### Moving Entities
 
-Movement functions transfer the data stored under a key from a selector to a destination. Only the specified key is affected; other keys at the same cell are untouched.
+Movement functions transfer the data stored in a table from a selector to a destination. Only the specified table is affected; other tables at the same cell are untouched.
 
 **Move by offset** — shift selected cells by (dx, dy):
 
@@ -342,10 +289,10 @@ Both functions use a **two-pass** approach (snapshot all source values, then wri
 Store values that belong to the program rather than any particular cell:
 
 ```racket
-(set-grid! 'score 0)
-(get-grid  'score)             ; → value | #f
-(or (get-grid 'score) 0)       ; → value | default
-(delete-grid! 'score)
+(set-grid! 'player 'score 0)
+(get-grid  'player 'score)     ; → value | #f
+(delete-grid! 'player 'score)  ; remove one key
+(delete-grid! 'player)         ; remove entire table
 ```
 
 ---
@@ -354,7 +301,8 @@ Store values that belong to the program rather than any particular cell:
 
 ```racket
 (clear!)                       ; reset all cell data and global data
-(delete-grid! 'score)          ; remove one global key
+(delete-grid! 'player 'score)  ; remove one key from table
+(delete-grid! 'player)         ; remove entire table
 ```
 
 ---
