@@ -140,6 +140,21 @@
   (init! 3)
   (check-equal? (select-row 2) (set '(0 2) '(1 2) '(2 2))))
 
+;; select-rectangle
+
+(test-case "select-rectangle — returns correct cells"
+  (init! 10)
+  (check-equal? (select-rectangle 1 2 3 2)
+                (set '(1 2) '(2 2) '(3 2) '(1 3) '(2 3) '(3 3))))
+
+(test-case "select-rectangle — width 1 height 1 returns single cell"
+  (init! 10)
+  (check-equal? (select-rectangle 4 5 1 1) (set '(4 5))))
+
+(test-case "select-rectangle — count equals width times height"
+  (init! 10)
+  (check-equal? (set-count (select-rectangle 0 0 4 3)) 12))
+
 ;; select-neighbors (moore)
 
 (test-case "select-neighbors — moore r=1 returns 8 cells"

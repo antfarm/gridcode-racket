@@ -99,6 +99,7 @@ Selectors are functions that query the grid for cells that satisfy certain condi
 | `(select-xy x y)` | A single cell | set of coords |
 | `(select-row y)` | All cells in row y | set of coords |
 | `(select-column x)` | All cells in column x | set of coords |
+| `(select-rectangle x y width height)` | All cells in rectangle | set of coords |
 | `(select-neighbors x y neighborhood)` | Cells surrounding (x, y) | set of coords |
 | `(select-neighbors x y neighborhood r)` | Cells within radius r of (x, y) | set of coords |
 | `(select-at deltas x y)` | Cells at specific offsets from (x, y) | set of coords |

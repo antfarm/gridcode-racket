@@ -8,6 +8,7 @@
          select-xy
          select-column
          select-row
+         select-rectangle
          select-neighbors
          select-at
          offset
@@ -71,6 +72,13 @@
 (define (select-row y)
   (list->set
    (filter (lambda (coord) (= (second coord) y))
+           (all-coordinates))))
+
+(define (select-rectangle x y width height)
+  (list->set
+   (filter (lambda (coord)
+             (and (>= (first coord) x)  (< (first coord) (+ x width))
+                  (>= (second coord) y) (< (second coord) (+ y height))))
            (all-coordinates))))
 
 (define (select-at deltas x y)
