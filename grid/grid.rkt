@@ -1,5 +1,7 @@
 #lang racket
 
+(require "index.rkt")
+
 (provide init!
          set-cell!
          get-cell
@@ -34,7 +36,8 @@
   (hash-set! grid 'coordinates
              (for*/list ([x (in-range size)]
                          [y (in-range size)])
-               (list x y))))
+               (list x y)))
+  (index-clear!))
 
 ;; Cell data
 ;; Storage: cells → (x y) → table → key → value
@@ -50,21 +53,24 @@
     [(x y table)
      (let* ([cells (hash-ref grid 'cells)]
             [cell  (or (hash-ref cells (list x y) #f)
-                       (let ([h (make-hash)])
-                         (hash-set! cells (list x y) h)
-                         h))])
+                       (let ([new-cell (make-hash)])
+                         (hash-set! cells (list x y) new-cell)
+                         new-cell))])
        (unless (hash-has-key? cell table)
-         (hash-set! cell table (make-hash))))]
+         (hash-set! cell table (make-hash))
+         (index-set-cell! x y table)))]
     [(x y table key value)
      (let* ([cells (hash-ref grid 'cells)]
             [cell  (or (hash-ref cells (list x y) #f)
-                       (let ([h (make-hash)])
-                         (hash-set! cells (list x y) h)
-                         h))]
+                       (let ([new-cell (make-hash)])
+                         (hash-set! cells (list x y) new-cell)
+                         new-cell))]
             [t     (or (hash-ref cell table #f)
-                       (let ([h (make-hash)])
-                         (hash-set! cell table h)
-                         h))])
+                       (let ([new-table (make-hash)])
+                         (hash-set! cell table new-table)
+                         new-table))]
+            [old-value (hash-ref t key #f)])
+       (index-set-cell! x y table key old-value value)
        (hash-set! t key value))]))
 
 (define (get-cell x y table key)
@@ -78,10 +84,17 @@
   (case-lambda
     [(x y table)
      (let ([cell (hash-ref (hash-ref grid 'cells) (list x y) #f)])
-       (when cell (hash-remove! cell table)))]
+       (when cell
+         (let ([old-table (hash-ref cell table #f)])
+           (when old-table
+             (index-delete-cell! x y table old-table)))
+         (hash-remove! cell table)))]
     [(x y table key)
-     (let ([t (cell-table x y table)])
-       (when t (hash-remove! t key)))]))
+     (let ([table-hash (cell-table x y table)])
+       (when table-hash
+         (when (hash-has-key? table-hash key)
+           (index-delete-cell! x y table key (hash-ref table-hash key #f)))
+         (hash-remove! table-hash key)))]))
 
 ;; Movement
 
@@ -91,14 +104,16 @@
            [t (cell-table x y table)])
       (list x y (and t (hash-copy t))))))
 
-(define (write-table! x y table t)
-  (when t
-    (let* ([cells (hash-ref grid 'cells)]
-           [cell  (or (hash-ref cells (list x y) #f)
-                      (let ([h (make-hash)])
-                        (hash-set! cells (list x y) h)
-                        h))])
-      (hash-set! cell table t))))
+(define (write-table! x y table new-table)
+  (when new-table
+    (let* ([cells     (hash-ref grid 'cells)]
+           [cell      (or (hash-ref cells (list x y) #f)
+                          (let ([new-cell (make-hash)])
+                            (hash-set! cells (list x y) new-cell)
+                            new-cell))]
+           [old-table (hash-ref cell table #f)])
+      (index-write-table! x y table old-table new-table)
+      (hash-set! cell table new-table))))
 
 (define (copy-by! coords table dx dy)
   (for ([s (snapshot-table table coords)])
@@ -182,4 +197,5 @@
 
 (define (clear!)
   (hash-set! grid 'cells (make-hash))
-  (hash-set! grid 'data (make-hash)))
+  (hash-set! grid 'data (make-hash))
+  (index-clear!))

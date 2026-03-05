@@ -1,7 +1,8 @@
 #lang racket
 
 (require racket/set
-         "grid.rkt")
+         "grid.rkt"
+         "index.rkt")
 
 (provide select
          select-all
@@ -30,33 +31,13 @@
 (define select
   (case-lambda
     [(table)
-     (list->set
-      (filter-map (lambda (coord)
-                    (let* ([x (first coord)] [y (second coord)])
-                      (and (hash-has-key? (cell-data x y) table)
-                           (list x y))))
-                  (all-coordinates)))]
+     (index-select table)]
     [(table key)
-     (list->set
-      (filter-map (lambda (coord)
-                    (let* ([x (first coord)] [y (second coord)]
-                           [t (hash-ref (cell-data x y) table #f)])
-                      (and t
-                           (hash-has-key? t key)
-                           (list x y))))
-                  (all-coordinates)))]
+     (index-select table key)]
     [(table key value)
-     (list->set
-      (filter-map (lambda (coord)
-                    (let* ([x (first coord)] [y (second coord)]
-                           [t (hash-ref (cell-data x y) table #f)])
-                      (and t
-                           (let ([v (hash-ref t key #f)])
-                             (and (if (list? value)
-                                      (member v value)
-                                      (equal? v value))
-                                  (list x y))))))
-                  (all-coordinates)))]))
+     (if (list? value)
+         (foldl set-union (set) (map (lambda (v) (index-select table key v)) value))
+         (index-select table key value))]))
 
 (define (select-all)
   (list->set (all-coordinates)))
