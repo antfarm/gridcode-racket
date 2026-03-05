@@ -153,6 +153,29 @@ A cell can hold multiple tables simultaneously:
 
 ---
 
+### Global Data
+
+Store values that belong to the program rather than any particular cell:
+
+```racket
+(set-grid! 'player 'score 0)
+(get-grid  'player 'score)     ; → value | #f
+(delete-grid! 'player 'score)  ; remove one key
+(delete-grid! 'player)         ; remove entire table
+```
+
+---
+
+### Clearing the Grid
+
+```racket
+(clear!)                       ; reset all cell data and global data
+(delete-grid! 'player 'score)  ; remove one key from table
+(delete-grid! 'player)         ; remove entire table
+```
+
+---
+
 ### Coordinate Selectors
 
 A **selector** is a set of `(x y)` coordinate pairs. Selector functions describe *which cells* to work with; they don't read or write cell data.
@@ -211,7 +234,7 @@ A **selector** is a set of `(x y)` coordinate pairs. Selector functions describe
 
 ### Iterating with `with`
 
-`with` loops over a selector, executing the body once per coordinate with `x` and `y` bound:
+`with` loops over a selector, executing the body once per coordinate. The `as (x y)` clause names the bound coordinates:
 
 ```racket
 (with (select 'wall) as (x y)
@@ -280,29 +303,6 @@ Both functions use a **two-pass** approach (snapshot all source values, then wri
 ```racket
 (copy-by! (select 'trail) 'trail dx dy)
 (copy-to! (select 'ball)  'ball  bx by)
-```
-
----
-
-### Global Data
-
-Store values that belong to the program rather than any particular cell:
-
-```racket
-(set-grid! 'player 'score 0)
-(get-grid  'player 'score)     ; → value | #f
-(delete-grid! 'player 'score)  ; remove one key
-(delete-grid! 'player)         ; remove entire table
-```
-
----
-
-### Clearing the Grid
-
-```racket
-(clear!)                       ; reset all cell data and global data
-(delete-grid! 'player 'score)  ; remove one key from table
-(delete-grid! 'player)         ; remove entire table
 ```
 
 ---
