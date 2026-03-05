@@ -15,7 +15,16 @@
          nearest
          union
          intersection
-         difference)
+         difference
+         with)
+
+(define-syntax with
+  (syntax-rules (as)
+    [(with selector as (x y) body ...)
+     (for ([coord (in-set selector)])
+       (let ([x (first coord)]
+             [y (second coord)])
+         body ...))]))
 
 (define select
   (case-lambda

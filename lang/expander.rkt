@@ -8,16 +8,7 @@
 (provide (all-from-out racket)
          (all-from-out gridcode/grid/main)
          program
-         define-list
-         with)
-
-(define-syntax with
-  (syntax-rules (as)
-    [(with selector as (x y) body ...)
-     (for ([coord (in-set selector)])
-       (let ([x (first coord)]
-             [y (second coord)])
-         body ...))]))
+         define-list)
 
 
 (define-syntax (program stx)
