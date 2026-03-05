@@ -53,6 +53,6 @@ Run the examples:
 # Ant
 ./bin/gridcode examples/ant.grid
 
-# Hello
-./bin/gridcode examples/hello.grid
+# Blink
+./bin/gridcode examples/blink.grid
 ```

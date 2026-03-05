@@ -1,7 +1,7 @@
 #lang gridcode
 
 (program
- "Hello"
+ "Blink"
 
  (define grid-size 16)
  (define frame-rate 2)
