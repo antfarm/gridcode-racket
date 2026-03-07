@@ -59,7 +59,7 @@
                              new-cell))])
            (unless (hash-has-key? cell c)
              (hash-set! cell c (make-hash))
-             (index-set-cell! a b c)))
+             (index-set! a b c)))
          ;; global form: (set-value! table key value)
          (let* ([data (grid-data)]
                 [t    (or (hash-ref data a #f)
@@ -79,7 +79,7 @@
                          (hash-set! cell table new-table)
                          new-table))]
             [old-value (hash-ref t key #f)])
-       (index-set-cell! x y table key old-value value)
+       (index-set! x y table key old-value value)
        (hash-set! t key value))]))
 
 (define get-value
@@ -118,7 +118,7 @@
        (when cell
          (let ([old-table (hash-ref cell table #f)])
            (when old-table
-             (index-delete-cell! x y table old-table)))
+             (index-delete! x y table old-table)))
          (hash-remove! cell table)))]))
 
 (define delete-key!
@@ -132,7 +132,7 @@
      (let ([table-hash (cell-table x y table)])
        (when table-hash
          (when (hash-has-key? table-hash key)
-           (index-delete-cell! x y table key (hash-ref table-hash key #f)))
+           (index-delete! x y table key (hash-ref table-hash key #f)))
          (hash-remove! table-hash key)))]))
 
 ;; Movement
@@ -151,7 +151,7 @@
                             (hash-set! cells (list x y) new-cell)
                             new-cell))]
            [old-table (hash-ref cell table #f)])
-      (index-write-table! x y table old-table new-table)
+      (index-set-table! x y table old-table new-table)
       (hash-set! cell table new-table))))
 
 (define copy-by!

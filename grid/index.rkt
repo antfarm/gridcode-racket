@@ -2,9 +2,9 @@
 
 (require racket/set)
 
-(provide index-set-cell!
-         index-delete-cell!
-         index-write-table!
+(provide index-set!
+         index-delete!
+         index-set-table!
          index-clear!
          index-select)
 
@@ -14,8 +14,8 @@
 ;;   key-index    : table → key → mutable-set(coord)
 ;;   value-index  : table → key → value → mutable-set(coord)
 ;;
-;; All three are updated by index-set-cell!, index-delete-cell!,
-;; index-write-table!, and index-clear!, which mirror the grid's
+;; All three are updated by index-set!, index-delete!,
+;; index-set-table!, and index-clear!, which mirror the grid's
 ;; mutation API exactly.
 
 (define table-index (make-hash))
@@ -69,11 +69,11 @@
 ;; ---- Public API ----
 
 ;; Mirrors set-value! in grid.rkt:
-;;   (index-set-cell! x y table)                        — flag form
-;;   (index-set-cell! x y table key old-value new-value) — data form
+;;   (index-set! x y table)                        — flag form
+;;   (index-set! x y table key old-value new-value) — data form
 ;;
 ;; old-value is the value currently at (x y table key), or #f if absent.
-(define index-set-cell!
+(define index-set!
   (case-lambda
     [(x y table)
      (add-coord-to-index! table-index table (list x y))]
@@ -96,12 +96,12 @@
         coord))]))
 
 ;; Mirrors delete-table!/delete-key! in grid.rkt:
-;;   (index-delete-cell! x y table old-table-hash)   — whole table
-;;   (index-delete-cell! x y table key old-value)    — single key
+;;   (index-delete! x y table old-table-hash)   — whole table
+;;   (index-delete! x y table key old-value)    — single key
 ;;
 ;; old-table-hash: the table's hash (key→value) before deletion, or #f if flag-only.
 ;; old-value: the value stored at key before deletion.
-(define index-delete-cell!
+(define index-delete!
   (case-lambda
     [(x y table old-table-hash)
      (remove-table-from-all-indices! (list x y) table old-table-hash)]
@@ -121,7 +121,7 @@
 ;; Mirrors write-table! (used internally by move/copy operations).
 ;; old-table-hash: the table hash at (x y table) before the write, or #f if absent.
 ;; new-table-hash: the table hash being written (always non-#f when called).
-(define (index-write-table! x y table old-table-hash new-table-hash)
+(define (index-set-table! x y table old-table-hash new-table-hash)
   (remove-table-from-all-indices! (list x y) table old-table-hash)
   (let ([coord (list x y)])
     (add-coord-to-index! table-index table coord)
