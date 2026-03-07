@@ -78,7 +78,18 @@
     (if t (hash-ref t key #f) #f)))
 
 (define (cell-info x y)
-  (format "(~a,~a) ~a" x y (cell-data x y)))
+  (define data (cell-data x y))
+  (define sorted-tables (sort (hash-keys data) symbol<?))
+  (string-join
+   (cons (format "(~a,~a)" x y)
+         (for*/list ([table sorted-tables]
+                     [line  (let ([keys (sort (hash-keys (hash-ref data table)) symbol<?)])
+                              (if (null? keys)
+                                  (list (format " ~a" table))
+                                  (for/list ([key keys])
+                                    (format " ~a.~a: ~a" table key (hash-ref (hash-ref data table) key)))))])
+           line))
+   "\n"))
 
 (define delete-cell!
   (case-lambda
