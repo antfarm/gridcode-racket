@@ -9,8 +9,8 @@
 
 (test-case "with — iterates over all matching cells"
            (init! 10)
-           (set-cell! 1 1 'foo 'v 1)
-           (set-cell! 2 3 'foo 'v 1)
+           (set-value! 1 1 'foo 'v 1)
+           (set-value! 2 3 'foo 'v 1)
            (define visited (set))
            (with (select 'foo) as (x y)
                  (set! visited (set-add visited (list x y))))
@@ -18,9 +18,9 @@
 
 (test-case "with — executes once per matching cell"
            (init! 10)
-           (set-cell! 1 1 'foo 'v 1)
-           (set-cell! 2 2 'foo 'v 1)
-           (set-cell! 3 3 'foo 'v 1)
+           (set-value! 1 1 'foo 'v 1)
+           (set-value! 2 2 'foo 'v 1)
+           (set-value! 3 3 'foo 'v 1)
            (define count 0)
            (with (select 'foo) as (_x _y)
                  (set! count (+ count 1)))
@@ -35,7 +35,7 @@
 
 (test-case "with — x and y are bound correctly"
            (init! 10)
-           (set-cell! 3 7 'foo 'v 1)
+           (set-value! 3 7 'foo 'v 1)
            (define result #f)
            (with (select 'foo) as (x y)
                  (set! result (list x y)))
@@ -43,17 +43,17 @@
 
 (test-case "with — body can read cell data"
            (init! 10)
-           (set-cell! 4 4 'foo 'val 99)
+           (set-value! 4 4 'foo 'val 99)
            (define found #f)
            (with (select 'foo) as (x y)
-                 (set! found (get-cell x y 'foo 'val)))
+                 (set! found (get-value x y 'foo 'val)))
            (check-equal? found 99))
 
 (test-case "with (one ...) — executes exactly once with multiple matches"
            (init! 10)
-           (set-cell! 1 1 'foo 'v 1)
-           (set-cell! 2 2 'foo 'v 1)
-           (set-cell! 3 3 'foo 'v 1)
+           (set-value! 1 1 'foo 'v 1)
+           (set-value! 2 2 'foo 'v 1)
+           (set-value! 3 3 'foo 'v 1)
            (define count 0)
            (with (one (select 'foo)) as (_x _y)
                  (set! count (+ count 1)))
@@ -63,8 +63,8 @@
 
 (test-case "select — returns coordinates of cells with table"
   (init! 10)
-  (set-cell! 2 3 'wall 'v 1)
-  (set-cell! 5 7 'wall 'v 1)
+  (set-value! 2 3 'wall 'v 1)
+  (set-value! 5 7 'wall 'v 1)
   (check-equal? (select 'wall) (set '(2 3) '(5 7))))
 
 (test-case "select — returns empty set when no cells match"
@@ -73,46 +73,46 @@
 
 (test-case "select — finds cells with table present"
   (init! 10)
-  (set-cell! 3 3 'foo 'v 0)
+  (set-value! 3 3 'foo 'v 0)
   (check-equal? (select 'foo) (set '(3 3))))
 
 (test-case "select — finds cells set with flag form (no keys)"
   (init! 10)
-  (set-cell! 4 6 'wall)
+  (set-value! 4 6 'wall)
   (check-equal? (select 'wall) (set '(4 6))))
 
 ;; select (table key)
 
 (test-case "select — filters cells where table has key"
   (init! 10)
-  (set-cell! 1 1 'enemy 'state 1)
-  (set-cell! 2 2 'enemy 'state 2)
-  (set-cell! 3 3 'wall 'v 1)
+  (set-value! 1 1 'enemy 'state 1)
+  (set-value! 2 2 'enemy 'state 2)
+  (set-value! 3 3 'wall 'v 1)
   (check-equal? (select 'enemy 'state) (set '(1 1) '(2 2))))
 
 (test-case "select — key filter excludes cells without that key"
   (init! 10)
-  (set-cell! 1 1 'wall 'v 1)
+  (set-value! 1 1 'wall 'v 1)
   (check-equal? (select 'wall 'dx) (set)))
 
 ;; select (key property value)
 
 (test-case "select — filters by exact key value"
   (init! 10)
-  (set-cell! 1 1 'enemy 'state 1)
-  (set-cell! 2 2 'enemy 'state 2)
+  (set-value! 1 1 'enemy 'state 1)
+  (set-value! 2 2 'enemy 'state 2)
   (check-equal? (select 'enemy 'state 1) (set '(1 1))))
 
 (test-case "select — returns empty set when value does not match"
   (init! 10)
-  (set-cell! 1 1 'enemy 'state 1)
+  (set-value! 1 1 'enemy 'state 1)
   (check-equal? (select 'enemy 'state 2) (set)))
 
 (test-case "select — filters by list of values"
   (init! 10)
-  (set-cell! 1 1 'enemy 'state 1)
-  (set-cell! 2 2 'enemy 'state 2)
-  (set-cell! 3 3 'enemy 'state 3)
+  (set-value! 1 1 'enemy 'state 1)
+  (set-value! 2 2 'enemy 'state 2)
+  (set-value! 3 3 'enemy 'state 3)
   (check-equal? (select 'enemy 'state '(1 2)) (set '(1 1) '(2 2))))
 
 ;; select-all

@@ -34,14 +34,26 @@ A cell is addressed by its (x y) coordinates, a stored value by the tuple (x y t
 
 | Function | Description | Returns |
 |---|---|---|
-| `(set-cell! x y table)` | Set a flag on the cell | `void` |
-| `(set-cell! x y table key value)` | Store value in table at key | `void` |
-| `(get-cell x y table key)` | Read value in table at key | `value` \| `#f` |
-| `(delete-cell! x y table key)` | Remove key from table | `void` |
-| `(delete-cell! x y table)` | Remove entire table from cell | `void` |
-| `(has? x y table)` | Check if cell has a table with that name | `bool` |
-| `(has? x y table key)` | Check if the table has a given key | `bool` |
-| `(cell-info x y)` | String representation of a cell | `string` |
+| `(set-value! x y table key value)` | Store value in table at key | `void` |
+| `(set-value! x y table)` | Set a flag on the cell if the table does not exist yet | `void` |
+| `(get-value x y table key)` | Read value in table at key | `value` \| `#f` |
+| `(delete-table! x y table)` | Remove entire table from cell | `void` |
+| `(delete-key! x y table key)` | Remove key from table | `void` |
+| `(has-table? x y table)` | Check if cell has a table with that name | `bool` |
+| `(has-key? x y table key)` | Check if the table has a given key | `bool` |
+| `(cell-info x y)` | String representation of a cell's data | `string` |
+
+### Global Data
+
+The grid itself can store data in the same fashion as a cell, this is useful for storing global data.
+
+| Function | Description | Returns |
+|---|---|---|
+| `(set-value! table key value)` | Store value in table at key | void |
+| `(get-value table key)` | Read value in table at key | value \| #f |
+| `(delete-table! table)` | Remove entire table | void |
+| `(delete-key! table key)` | Remove key from table | void |
+| `(grid-info)` | String representation of global data | string |
 
 ### Movement
 
@@ -53,18 +65,6 @@ Move or copy a table's data from one cell to another. Only the specified table i
 | `(move-to! x y table tx ty)` | Move the table at (x, y) to (tx, ty) | void |
 | `(copy-by! x y table dx dy)` | Copy the table at (x, y) by (dx, dy), keep original | void |
 | `(copy-to! x y table tx ty)` | Copy the table at (x, y) to (tx, ty), keep original | void |
-
-### Global Data
-
-The grid itself can store data in the same fashion as a cell, this is useful for storing global data.
-
-| Function | Description | Returns |
-|---|---|---|
-| `(set-grid! table key value)` | Store value in table at key | void |
-| `(get-grid table key)` | Read value in table at key | value \| #f |
-| `(delete-grid! table key)` | Remove key from table | void |
-| `(delete-grid! table)` | Remove entire table | void |
-| `(grid-info)` | String representation of global data | string |
 
 ### Reset
 
@@ -146,21 +146,21 @@ Colors are RGBA values with each channel in the range 0.0–1.0. Alpha is option
 
 ### Storing Data on Cells
 
-Each cell can hold any number of named **tables**. A table maps keys to values. Multiple `set-cell!` calls accumulate:
+Each cell can hold any number of named **tables**. A table maps keys to values. Multiple `set-value!` calls accumulate:
 
 ```racket
-(set-cell! x y 'ball 'dx  1)
-(set-cell! x y 'ball 'dy -1)
-(get-cell x y 'ball 'dx)           ; → value | #f
-(delete-cell! x y 'ball 'dx)       ; remove one key
-(delete-cell! x y 'ball)           ; remove whole table
+(set-value! x y 'ball 'dx  1)
+(set-value! x y 'ball 'dy -1)
+(get-value x y 'ball 'dx)           ; → value | #f
+(delete-key! x y 'ball 'dx)         ; remove one key
+(delete-table! x y 'ball)           ; remove whole table
 ```
 
 A cell can hold multiple tables simultaneously:
 
 ```racket
-(set-cell! x y 'wall 'strength 1)
-(set-cell! x y 'ball 'dx 1)        ; same cell holds both tables
+(set-value! x y 'wall 'strength 1)
+(set-value! x y 'ball 'dx 1)        ; same cell holds both tables
 ```
 
 ---
@@ -170,10 +170,10 @@ A cell can hold multiple tables simultaneously:
 Store values that belong to the program rather than any particular cell:
 
 ```racket
-(set-grid! 'player 'score 0)
-(get-grid  'player 'score)     ; → value | #f
-(delete-grid! 'player 'score)  ; remove one key
-(delete-grid! 'player)         ; remove entire table
+(set-value! 'player 'score 0)
+(get-value  'player 'score)     ; → value | #f
+(delete-key! 'player 'score)    ; remove one key
+(delete-table! 'player)         ; remove entire table
 ```
 
 ---
@@ -182,8 +182,8 @@ Store values that belong to the program rather than any particular cell:
 
 ```racket
 (clear!)                       ; reset all cell data and global data
-(delete-grid! 'player 'score)  ; remove one key from table
-(delete-grid! 'player)         ; remove entire table
+(delete-key! 'player 'score)   ; remove one key from table
+(delete-table! 'player)        ; remove entire table
 ```
 
 ---
@@ -250,14 +250,14 @@ A **selector** is a set of `(x y)` coordinate pairs. Selector functions describe
 
 ```racket
 (with (select 'wall) as (x y)
-  (set-cell! x y 'wall 'dx 1))
+  (set-value! x y 'wall 'dx 1))
 ```
 
 When a selector contains exactly one cell (e.g. a single ball), `with` is used to unpack its position:
 
 ```racket
 (with (select 'ball) as (ball-x ball-y)
-  (define dx (get-cell ball-x ball-y 'ball 'dx))
+  (define dx (get-value ball-x ball-y 'ball 'dx))
   ...)
 ```
 

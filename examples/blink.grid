@@ -9,14 +9,14 @@
  (define (setup-grid)
    (with (select-all) as (x y)
          (when (= x y)
-           (set-cell! x x 'cell))))
+           (set-value! x x 'cell))))
 
  (define (update-grid)
    (with (select-all) as (x y)
          (toggle-cell x y)))
 
  (define (color-for-cell x y)
-   (if (has? x y 'cell)
+   (if (has-table? x y 'cell)
        (color 1.0 0.8 0.2)
        (color 0.0 0.0 0.0)))
 
@@ -30,6 +30,6 @@
    (void))
 
  (define (toggle-cell x y)
-   (if (has? x y 'cell)
-       (delete-cell! x y 'cell)
-       (set-cell! x y 'cell))))
+   (if (has-table? x y 'cell)
+       (delete-table! x y 'cell)
+       (set-value! x y 'cell))))

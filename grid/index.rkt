@@ -68,7 +68,7 @@
 
 ;; ---- Public API ----
 
-;; Mirrors set-cell! in grid.rkt:
+;; Mirrors set-value! in grid.rkt:
 ;;   (index-set-cell! x y table)                        — flag form
 ;;   (index-set-cell! x y table key old-value new-value) — data form
 ;;
@@ -95,7 +95,7 @@
         new-value
         coord))]))
 
-;; Mirrors delete-cell! in grid.rkt:
+;; Mirrors delete-table!/delete-key! in grid.rkt:
 ;;   (index-delete-cell! x y table old-table-hash)   — whole table
 ;;   (index-delete-cell! x y table key old-value)    — single key
 ;;

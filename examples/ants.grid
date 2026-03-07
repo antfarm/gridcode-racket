@@ -1,0 +1,57 @@
+#lang gridcode
+
+(program
+ "Ants"
+
+ (define grid-size 64)
+ (define frame-rate 10)
+
+ (define (random-dir)
+   (- (random 3) 1))
+
+ (define (setup-grid)
+   (for ([_ (in-range 1000)])
+     (define x (random grid-size))
+     (define y (random grid-size))
+     (set-value! x y 'ant 'dx (random-dir))
+     (set-value! x y 'ant 'dy 1)))
+
+ (define (update-grid)
+   (define evaporation-rate 0.07)
+
+   (with (select 'trail) as (x y)
+         (define concentration (get-value x y 'trail 'concentration))
+         (define new-concentration (* concentration (- 1.0 evaporation-rate)))
+         (if (< new-concentration evaporation-rate)
+             (delete-table! x y 'trail)
+             (set-value! x y 'trail 'concentration new-concentration)))
+
+   (with (select 'ant) as (x y)
+         (define concentration (or (get-value x y 'trail 'concentration) 0))
+         (set-value! x y 'trail 'concentration (+ concentration 1.0))
+
+         (define dx (get-value x y 'ant 'dx))
+         (define dy (get-value x y 'ant 'dy))
+         (define new-x (modulo (+ x dx) grid-size))
+         (define new-y (modulo (+ y dy) grid-size))
+         (move-to! x y 'ant new-x new-y)))
+
+ (define (color-for-cell x y)
+   (cond
+     ((has-table? x y 'ant) (color 1.0 0.8 0.2))
+     ((has-table? x y 'trail) (begin
+                          (define concentration (get-value x y 'trail 'concentration))
+                          (define opacity (min 1.0 (* concentration 0.5)))
+                          (color 0.2 0.9 0.0 opacity)))
+     (else (color 0.0 0.0 0.0))))
+
+ (define (info-for-cell x y)
+   (cell-info x y))
+
+ (define (handle-cell-tapped x y)
+   (void))
+
+ (define (handle-key-pressed key)
+   (void)))
+
+

@@ -3,24 +3,23 @@
 (require "index.rkt")
 
 (provide init!
-         set-cell!
-         get-cell
+         set-value!
+         get-value
          cell-data
          cell-info
-         delete-cell!
+         delete-table!
+         delete-key!
          delete-cells!
-         set-grid!
-         get-grid
          grid-data
          grid-info
-         delete-grid!
          clear!
          copy-to!
          copy-by!
          move-by!
          move-to!
          all-coordinates
-         has?
+         has-table?
+         has-key?
          has-at?
          bounds-of)
 
@@ -48,18 +47,28 @@
 (define (cell-table x y table)
   (hash-ref (cell-data x y) table #f))
 
-(define set-cell!
+(define set-value!
   (case-lambda
-    [(x y table)
-     (let* ([cells (hash-ref grid 'cells)]
-            [cell  (or (hash-ref cells (list x y) #f)
-                       (let ([new-cell (make-hash)])
-                         (hash-set! cells (list x y) new-cell)
-                         new-cell))])
-       (unless (hash-has-key? cell table)
-         (hash-set! cell table (make-hash))
-         (index-set-cell! x y table)))]
+    [(a b c)
+     (if (number? a)
+         ;; cell flag form: (set-value! x y table)
+         (let* ([cells (hash-ref grid 'cells)]
+                [cell  (or (hash-ref cells (list a b) #f)
+                           (let ([new-cell (make-hash)])
+                             (hash-set! cells (list a b) new-cell)
+                             new-cell))])
+           (unless (hash-has-key? cell c)
+             (hash-set! cell c (make-hash))
+             (index-set-cell! a b c)))
+         ;; global form: (set-value! table key value)
+         (let* ([data (grid-data)]
+                [t    (or (hash-ref data a #f)
+                          (let ([h (make-hash)])
+                            (hash-set! data a h)
+                            h))])
+           (hash-set! t b c)))]
     [(x y table key value)
+     ;; cell data form: (set-value! x y table key value)
      (let* ([cells (hash-ref grid 'cells)]
             [cell  (or (hash-ref cells (list x y) #f)
                        (let ([new-cell (make-hash)])
@@ -73,9 +82,16 @@
        (index-set-cell! x y table key old-value value)
        (hash-set! t key value))]))
 
-(define (get-cell x y table key)
-  (let ([t (cell-table x y table)])
-    (if t (hash-ref t key #f) #f)))
+(define get-value
+  (case-lambda
+    [(table key)
+     ;; global form: (get-value table key)
+     (let ([t (hash-ref (grid-data) table #f)])
+       (if t (hash-ref t key #f) #f))]
+    [(x y table key)
+     ;; cell form: (get-value x y table key)
+     (let ([t (cell-table x y table)])
+       (if t (hash-ref t key #f) #f))]))
 
 (define (cell-info x y)
   (define data (cell-data x y))
@@ -91,16 +107,28 @@
            line))
    "\n"))
 
-(define delete-cell!
+(define delete-table!
   (case-lambda
+    [(table)
+     ;; global form: (delete-table! table)
+     (hash-remove! (grid-data) table)]
     [(x y table)
+     ;; cell form: (delete-table! x y table)
      (let ([cell (hash-ref (hash-ref grid 'cells) (list x y) #f)])
        (when cell
          (let ([old-table (hash-ref cell table #f)])
            (when old-table
              (index-delete-cell! x y table old-table)))
-         (hash-remove! cell table)))]
+         (hash-remove! cell table)))]))
+
+(define delete-key!
+  (case-lambda
+    [(table key)
+     ;; global form: (delete-key! table key)
+     (let ([t (hash-ref (grid-data) table #f)])
+       (when t (hash-remove! t key)))]
     [(x y table key)
+     ;; cell form: (delete-key! x y table key)
      (let ([table-hash (cell-table x y table)])
        (when table-hash
          (when (hash-has-key? table-hash key)
@@ -147,7 +175,7 @@
     [(coords table dx dy)
      (define snaps (snapshot-table table coords))
      (for ([s snaps])
-       (delete-cell! (first s) (second s) table))
+       (delete-table! (first s) (second s) table))
      (for ([s snaps])
        (write-table! (+ (first s) dx) (+ (second s) dy) table (third s)))]
     [(x y table dx dy)
@@ -158,19 +186,18 @@
     [(coords table tx ty)
      (define snaps (snapshot-table table coords))
      (for ([s snaps])
-       (delete-cell! (first s) (second s) table))
+       (delete-table! (first s) (second s) table))
      (for ([s snaps])
        (write-table! tx ty table (third s)))]
     [(x y table tx ty)
      (move-to! (set (list x y)) table tx ty)]))
 
-(define has?
-  (case-lambda
-    [(x y table)
-     (hash-has-key? (cell-data x y) table)]
-    [(x y table key)
-     (let ([t (cell-table x y table)])
-       (and t (hash-has-key? t key) #t))]))
+(define (has-table? x y table)
+  (hash-has-key? (cell-data x y) table))
+
+(define (has-key? x y table key)
+  (let ([t (cell-table x y table)])
+    (and t (hash-has-key? t key) #t)))
 
 (define (has-at? coords x y)
   (set-member? coords (list x y)))
@@ -190,28 +217,8 @@
 (define (grid-data)
   (hash-ref grid 'data))
 
-(define (set-grid! table key value)
-  (let* ([data (grid-data)]
-         [t    (or (hash-ref data table #f)
-                   (let ([h (make-hash)])
-                     (hash-set! data table h)
-                     h))])
-    (hash-set! t key value)))
-
-(define (get-grid table key)
-  (let ([t (hash-ref (grid-data) table #f)])
-    (if t (hash-ref t key #f) #f)))
-
 (define (grid-info)
   (format "~a" (grid-data)))
-
-(define delete-grid!
-  (case-lambda
-    [(table)
-     (hash-remove! (grid-data) table)]
-    [(table key)
-     (let ([t (hash-ref (grid-data) table #f)])
-       (when t (hash-remove! t key)))]))
 
 ;; Grid-wide operations
 
@@ -220,7 +227,7 @@
 
 (define (delete-cells! coords table)
   (for ([coord (in-set coords)])
-    (delete-cell! (first coord) (second coord) table)))
+    (delete-table! (first coord) (second coord) table)))
 
 (define (clear!)
   (hash-set! grid 'cells (make-hash))
