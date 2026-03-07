@@ -229,7 +229,7 @@
            (check-equal? (get-cell 3 3 'ball 'dx) 1)
            (check-equal? (get-cell 3 3 'ball 'dy) -1))
 
-(test-case "move-by! — moves multiple cells"
+(test-case "move-by! — moves multiple tables"
            (init! 10)
            (set-cell! 1 1 'foo 'v 1)
            (set-cell! 2 2 'foo 'v 1)
@@ -275,6 +275,36 @@
 (test-case "move-to! — does nothing for empty selector"
            (init! 10)
            (check-not-exn (lambda () (move-to! (select 'foo) 'foo 5 5))))
+
+;; single-cell forms
+
+(test-case "move-to! — single-cell form moves table to absolute position"
+           (init! 10)
+           (set-cell! 2 3 'ant 'dx 1)
+           (move-to! 2 3 'ant 7 8)
+           (check-false (get-cell 2 3 'ant 'dx))
+           (check-equal? (get-cell 7 8 'ant 'dx) 1))
+
+(test-case "move-by! — single-cell form moves table by offset"
+           (init! 10)
+           (set-cell! 2 3 'ant 'dx 1)
+           (move-by! 2 3 'ant 1 0)
+           (check-false (get-cell 2 3 'ant 'dx))
+           (check-equal? (get-cell 3 3 'ant 'dx) 1))
+
+(test-case "copy-to! — single-cell form copies table to absolute position"
+           (init! 10)
+           (set-cell! 2 3 'foo 'v 1)
+           (copy-to! 2 3 'foo 7 8)
+           (check-equal? (get-cell 2 3 'foo 'v) 1)
+           (check-equal? (get-cell 7 8 'foo 'v) 1))
+
+(test-case "copy-by! — single-cell form copies table by offset"
+           (init! 10)
+           (set-cell! 2 3 'foo 'v 1)
+           (copy-by! 2 3 'foo 1 0)
+           (check-equal? (get-cell 2 3 'foo 'v) 1)
+           (check-equal? (get-cell 3 3 'foo 'v) 1))
 
 ;; has?
 

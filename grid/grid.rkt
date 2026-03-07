@@ -101,7 +101,7 @@
 (define (snapshot-table table coords)
   (for/list ([coord (in-set coords)])
     (let* ([x (first coord)] [y (second coord)]
-           [t (cell-table x y table)])
+                             [t (cell-table x y table)])
       (list x y (and t (hash-copy t))))))
 
 (define (write-table! x y table new-table)
@@ -115,27 +115,43 @@
       (index-write-table! x y table old-table new-table)
       (hash-set! cell table new-table))))
 
-(define (copy-by! coords table dx dy)
-  (for ([s (snapshot-table table coords)])
-    (write-table! (+ (first s) dx) (+ (second s) dy) table (third s))))
+(define copy-by!
+  (case-lambda
+    [(coords table dx dy)
+     (for ([s (snapshot-table table coords)])
+       (write-table! (+ (first s) dx) (+ (second s) dy) table (third s)))]
+    [(x y table dx dy)
+     (copy-by! (set (list x y)) table dx dy)]))
 
-(define (copy-to! coords table tx ty)
-  (for ([s (snapshot-table table coords)])
-    (write-table! tx ty table (third s))))
+(define copy-to!
+  (case-lambda
+    [(coords table tx ty)
+     (for ([s (snapshot-table table coords)])
+       (write-table! tx ty table (third s)))]
+    [(x y table tx ty)
+     (copy-to! (set (list x y)) table tx ty)]))
 
-(define (move-by! coords table dx dy)
-  (define snaps (snapshot-table table coords))
-  (for ([s snaps])
-    (delete-cell! (first s) (second s) table))
-  (for ([s snaps])
-    (write-table! (+ (first s) dx) (+ (second s) dy) table (third s))))
+(define move-by!
+  (case-lambda
+    [(coords table dx dy)
+     (define snaps (snapshot-table table coords))
+     (for ([s snaps])
+       (delete-cell! (first s) (second s) table))
+     (for ([s snaps])
+       (write-table! (+ (first s) dx) (+ (second s) dy) table (third s)))]
+    [(x y table dx dy)
+     (move-by! (set (list x y)) table dx dy)]))
 
-(define (move-to! coords table tx ty)
-  (define snaps (snapshot-table table coords))
-  (for ([s snaps])
-    (delete-cell! (first s) (second s) table))
-  (for ([s snaps])
-    (write-table! tx ty table (third s))))
+(define move-to!
+  (case-lambda
+    [(coords table tx ty)
+     (define snaps (snapshot-table table coords))
+     (for ([s snaps])
+       (delete-cell! (first s) (second s) table))
+     (for ([s snaps])
+       (write-table! tx ty table (third s)))]
+    [(x y table tx ty)
+     (move-to! (set (list x y)) table tx ty)]))
 
 (define has?
   (case-lambda

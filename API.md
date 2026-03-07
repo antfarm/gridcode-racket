@@ -43,6 +43,17 @@ A cell is addressed by its (x y) coordinates, a stored value by the tuple (x y t
 | `(has? x y table key)` | Check if the table has a given key | `bool` |
 | `(cell-info x y)` | String representation of a cell | `string` |
 
+### Movement
+
+Move or copy a table's data from one cell to another. Only the specified table is affected; other tables at the same cell are untouched. Uses a two-pass approach to avoid aliasing bugs when source and destination overlap.
+
+| Function | Description | Returns |
+|---|---|---|
+| `(move-by! x y table dx dy)` | Move the table at (x, y) by (dx, dy) | void |
+| `(move-to! x y table tx ty)` | Move the table at (x, y) to (tx, ty) | void |
+| `(copy-by! x y table dx dy)` | Copy the table at (x, y) by (dx, dy), keep original | void |
+| `(copy-to! x y table tx ty)` | Copy the table at (x, y) to (tx, ty), keep original | void |
+
 ### Global Data
 
 The grid itself can store data in the same fashion as a cell, this is useful for storing global data.
@@ -63,7 +74,7 @@ The grid itself can store data in the same fashion as a cell, this is useful for
 
 ### Operations on Multiple Cells
 
-These functions perform actions on multiple cells. The cells are passed via the `coords` parameter as a set of coordinate pairs `(x y)`. See  [Selecting Cells](#selecting-cells) for how to specify conditions to query the grid for cells.
+These functions perform actions on multiple cells. The cells are passed via the `coords` parameter as a set of coordinate pairs `(x y)`. See [Selecting Cells](#selecting-cells) for how to specify conditions to query the grid for cells.
 
 #### Spatial Queries
 
@@ -282,13 +293,15 @@ Movement functions transfer the data stored in a table from a selector to a dest
 **Move by offset** — shift selected cells by (dx, dy):
 
 ```racket
-(move-by! (select 'paddle) 'paddle dx 0)
+(move-by! (select 'paddle) 'paddle dx 0)   ; coords form
+(move-by! x y 'ant dx dy)                  ; single-cell form
 ```
 
 **Move to position** — teleport selected cells to an absolute coordinate:
 
 ```racket
-(move-to! (select 'ball) 'ball new-x new-y)
+(move-to! (select 'ball) 'ball new-x new-y)  ; coords form
+(move-to! x y 'ant new-x new-y)              ; single-cell form
 ```
 
 Note: `move-to!` places all selected cells at the same destination. It makes sense when the selector has exactly one cell (a single entity). For multi-cell shapes, use `move-by!`.
